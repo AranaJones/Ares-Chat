@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ares Galaxy - AI Chatroom</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #4a5d7a;
+    font-family: Tahoma, "Segoe UI", Arial, sans-serif;
+    font-size: 12px;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .window {
+    width: 100%;
+    max-width: 740px;
+    height: 100%;
+    max-height: 580px;
+    background: #ECE9D8;
+    border: 2px solid #0A246A;
+    border-radius: 6px;
+    box-shadow: 3px 3px 10px rgba(0,0,0,0.4);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .titlebar {
+    background: linear-gradient(180deg, #2A5CD8 0%, #0A246A 100%);
+    color: #fff;
+    padding: 5px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 13px;
+    flex-shrink: 0;
+    -webkit-app-region: drag;
+  }
+  .titlebar .left { display: flex; align-items: center; gap: 6px; }
+  .titlebar .icon {
+    width: 14px; height: 14px; background: #FFCC00; border-radius: 2px;
+    display: inline-block;
+  }
+
+  .menubar {
+    background: #ECE9D8;
+    border-bottom: 1px solid #ACA899;
+    padding: 3px 8px;
+    font-size: 11px;
+    color: #333;
+    flex-shrink: 0;
+  }
+  .menubar span { margin-right: 14px; cursor: default; }
+  .menubar span.link { color: #0A246A; text-decoration: underline; cursor: pointer; }
+
+  .toolbar {
+    background: #ECE9D8;
+    border-bottom: 1px solid #ACA899;
+    padding: 4px 8px;
+    font-size: 11px;
+    color: #444;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #3fbf3f;
+    display: inline-block;
+    box-shadow: 0 0 3px #3fbf3f;
+  }
+  .status-dot.off { background: #bf3f3f; box-shadow: 0 0 3px #bf3f3f; }
+  .peer-count { color: #555; }
+
+  .main {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .chatlog {
+    flex: 1;
+    background: #fff;
+    border: 1px inset #999;
+    margin: 6px 0 6px 6px;
+    padding: 6px 8px;
+    overflow-y: auto;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .line { margin: 0 0 2px 0; overflow-wrap: break-word; }
+  .ts { color: #888; }
+  .sys { color: #b30000; font-style: italic; }
+  .name-user { color: #0000CC; font-weight: bold; }
+  .name-bot { color: #007A33; font-weight: bold; }
+  .msg-user { color: #111; }
+  .msg-bot { color: #111; white-space: pre-wrap; }
+  .typing { color: #888; font-style: italic; }
+
+  .userlist {
+    width: 150px;
+    background: #fff;
+    border: 1px inset #999;
+    margin: 6px 6px 6px 0;
+    overflow-y: auto;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  .userlist-header {
+    background: #D8D4C4;
+    padding: 3px 6px;
+    font-weight: bold;
+    border-bottom: 1px solid #ACA899;
+  }
+  .userlist-item {
+    padding: 3px 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border-bottom: 1px solid #f0f0e8;
+  }
+  .userlist-item .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #3fbf3f;
+    flex-shrink: 0;
+  }
+
+  .inputbar {
+    display: flex;
+    padding: 6px;
+    gap: 6px;
+    background: #ECE9D8;
+    border-top: 1px solid #ACA899;
+    flex-shrink: 0;
+  }
+  .inputbar input[type=text] {
+    flex: 1;
+    padding: 5px 6px;
+    border: 1px inset #999;
+    font-family: Tahoma, Arial, sans-serif;
+    font-size: 12px;
+  }
+  .inputbar button {
+    padding: 5px 16px;
+    background: #ECE9D8;
+    border: 1px outset #ACA899;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .inputbar button:active { border-style: inset; }
+  .inputbar button:disabled { color: #999; cursor: default; }
+
+  .statusbar {
+    background: #ECE9D8;
+    border-top: 1px solid #ACA899;
+    padding: 3px 8px;
+    font-size: 10px;
+    color: #555;
+    flex-shrink: 0;
+  }
+
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    width: 380px;
+    background: #ECE9D8;
+    border: 2px solid #0A246A;
+    border-radius: 6px;
+    box-shadow: 3px 3px 10px rgba(0,0,0,0.4);
+  }
+  .modal .titlebar { border-radius: 4px 4px 0 0; }
+  .modal-body { padding: 14px; font-size: 12px; color: #222; }
+  .modal-body p { margin: 0 0 10px 0; line-height: 1.5; }
+  .modal-body input[type=text] {
+    width: 100%;
+    padding: 6px;
+    border: 1px inset #999;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 6px; }
+  .modal-actions button {
+    padding: 5px 16px;
+    background: #ECE9D8;
+    border: 1px outset #ACA899;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .modal-actions button:active { border-style: inset; }
+</style>
+</head>
+<body>
+
+<div class="window">
+  <div class="titlebar">
+    <div class="left"><span class="icon"></span> Ares Galaxy - #ai-chat</div>
+  </div>
+  <div class="menubar">
+    <span>File</span><span>Search</span><span>Chat</span>
+    <span class="link" id="openSettings">Settings (API Key)</span>
+    <span class="link" id="openNetwork">Network (supernodes)</span><span>Help</span>
+  </div>
+  <div class="toolbar">
+    <span class="status-dot" id="statusDot"></span> <span id="statusText">Checking connection...</span>
+    <span class="peer-count">| Room: #ai-chat | Peers online: 1,204</span>
+  </div>
+
+  <div class="main">
+    <div class="chatlog" id="chatlog"></div>
+    <div class="userlist">
+      <div class="userlist-header">Users (2)</div>
+      <div class="userlist-item"><span class="dot"></span>You</div>
+      <div class="userlist-item"><span class="dot"></span>AI_Helper</div>
+    </div>
+  </div>
+
+  <div class="inputbar">
+    <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off" />
+    <button id="sendBtn">Send</button>
+  </div>
+  <div class="statusbar">AI_Helper is an LLM-powered chat participant, running via the Anthropic API</div>
+</div>
+
+<div class="modal-overlay" id="settingsOverlay">
+  <div class="modal">
+    <div class="titlebar"><div class="left"><span class="icon"></span> Settings</div></div>
+    <div class="modal-body">
+      <p>Enter your Anthropic API key to enable AI_Helper. Get one at
+      <span style="text-decoration:underline;">console.anthropic.com</span>.
+      It's stored only on this device (localStorage), never sent anywhere except directly to Anthropic's API.</p>
+      <input type="text" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off" spellcheck="false" />
+      <div class="modal-actions">
+        <button id="saveKeyBtn">Save</button>
+        <button id="cancelKeyBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="networkOverlay">
+  <div class="modal" style="width:520px;">
+    <div class="titlebar"><div class="left"><span class="icon"></span> Network - supernode probe</div></div>
+    <div class="modal-body">
+      <p>This does a plain TCP connect check against Ares supernode IPs - the
+      same first step the real client does before login. It does <b>not</b>
+      log in or fetch chat rooms (that part of the protocol isn't confirmed
+      yet). Paste <code>host:port</code> pairs (one per line) or load a real
+      <code>SNodes.dat</code> from an existing Ares Galaxy install.</p>
+      <textarea id="nodeInput" rows="5" style="width:100%; font-family:'Courier New',monospace; font-size:11px; border:1px inset #999; padding:4px;" placeholder="203.0.113.10:2091&#10;203.0.113.11:2091"></textarea>
+      <div class="modal-actions" style="justify-content:flex-start; margin-top:8px;">
+        <button id="loadSNodesBtn">Load SNodes.dat...</button>
+        <button id="probeAllBtn">Probe all</button>
+      </div>
+      <div id="probeResults" style="margin-top:10px; max-height:220px; overflow-y:auto; font-family:'Courier New',monospace; font-size:11px; background:#fff; border:1px inset #999; padding:4px;"></div>
+      <div class="modal-actions" style="margin-top:10px;">
+        <button id="closeNetworkBtn">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const chatlog = document.getElementById('chatlog');
+  const input = document.getElementById('msgInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const settingsOverlay = document.getElementById('settingsOverlay');
+  const apiKeyInput = document.getElementById('apiKeyInput');
+
+  const STORAGE_KEY = 'ares_ai_chat_api_key';
+  const history = [];
+  const SYSTEM_PROMPT = "You are AI_Helper, a friendly and helpful participant in an old-school P2P chatroom (styled after Ares Galaxy). Keep replies conversational and reasonably concise, like a real chatroom message rather than a formal document. You are a generic helpful assistant - answer questions, help with tasks, and chat naturally.";
+
+  function getApiKey() {
+    return localStorage.getItem(STORAGE_KEY) || '';
+  }
+
+  function refreshStatus() {
+    if (getApiKey()) {
+      statusDot.classList.remove('off');
+      statusText.textContent = 'Connected to network';
+    } else {
+      statusDot.classList.add('off');
+      statusText.textContent = 'No API key set - click Settings';
+    }
+  }
+
+  function timestamp() {
+    const d = new Date();
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+
+  function appendLine(html) {
+    const div = document.createElement('div');
+    div.className = 'line';
+    div.innerHTML = html;
+    chatlog.appendChild(div);
+    chatlog.scrollTop = chatlog.scrollHeight;
+    return div;
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function addSystemLine(text) {
+    appendLine('<span class="ts">[' + timestamp() + ']</span> <span class="sys">* ' + escapeHtml(text) + '</span>');
+  }
+
+  function addUserLine(name, text, isBot) {
+    const nameClass = isBot ? 'name-bot' : 'name-user';
+    return appendLine(
+      '<span class="ts">[' + timestamp() + ']</span> ' +
+      '<span class="' + nameClass + '">&lt;' + escapeHtml(name) + '&gt;</span> ' +
+      '<span class="msg-' + (isBot ? 'bot' : 'user') + '">' + escapeHtml(text) + '</span>'
+    );
+  }
+
+  addSystemLine('You have joined #ai-chat');
+  addSystemLine('AI_Helper has joined the room');
+  addUserLine('AI_Helper', "hey, welcome to the room. ask me anything and I'll help out. (set your API key in Settings if you haven't yet)", true);
+
+  async function callClaude(userText) {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      throw new Error('no API key set - open Settings');
+    }
+
+    history.push({ role: 'user', content: userText });
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: history
+      })
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '');
+      throw new Error('API error ' + response.status + (errBody ? ': ' + errBody.slice(0, 200) : ''));
+    }
+
+    const data = await response.json();
+    const textBlock = (data.content || []).find(b => b.type === 'text');
+    const replyText = textBlock ? textBlock.text : "(no response)";
+    history.push({ role: 'assistant', content: replyText });
+    return replyText;
+  }
+
+  let sending = false;
+
+  async function handleSend() {
+    const text = input.value.trim();
+    if (!text || sending) return;
+
+    if (!getApiKey()) {
+      addSystemLine('Set your API key in Settings before chatting with AI_Helper.');
+      settingsOverlay.classList.add('show');
+      return;
+    }
+
+    sending = true;
+    sendBtn.disabled = true;
+    input.value = '';
+
+    addUserLine('You', text, false);
+
+    const typingLine = appendLine('<span class="typing">AI_Helper is typing...</span>');
+
+    try {
+      const reply = await callClaude(text);
+      typingLine.remove();
+      addUserLine('AI_Helper', reply, true);
+    } catch (err) {
+      typingLine.remove();
+      addSystemLine('AI_Helper failed to respond (' + err.message + ')');
+    } finally {
+      sending = false;
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  }
+
+  sendBtn.addEventListener('click', handleSend);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleSend();
+  });
+
+  document.getElementById('openSettings').addEventListener('click', () => {
+    apiKeyInput.value = getApiKey();
+    settingsOverlay.classList.add('show');
+  });
+  document.getElementById('cancelKeyBtn').addEventListener('click', () => {
+    settingsOverlay.classList.remove('show');
+  });
+  document.getElementById('saveKeyBtn').addEventListener('click', () => {
+    const key = apiKeyInput.value.trim();
+    if (key) {
+      localStorage.setItem(STORAGE_KEY, key);
+      addSystemLine('API key saved.');
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+      addSystemLine('API key cleared.');
+    }
+    refreshStatus();
+    settingsOverlay.classList.remove('show');
+  });
+
+  refreshStatus();
+  if (!getApiKey()) {
+    setTimeout(() => settingsOverlay.classList.add('show'), 300);
+  }
+
+  // --- Network / supernode probe panel ---
+  const networkOverlay = document.getElementById('networkOverlay');
+  const nodeInput = document.getElementById('nodeInput');
+  const probeResults = document.getElementById('probeResults');
+
+  document.getElementById('openNetwork').addEventListener('click', () => {
+    networkOverlay.classList.add('show');
+  });
+  document.getElementById('closeNetworkBtn').addEventListener('click', () => {
+    networkOverlay.classList.remove('show');
+  });
+
+  document.getElementById('loadSNodesBtn').addEventListener('click', async () => {
+    if (!window.aresNet) return;
+    const result = await window.aresNet.loadSNodesFile();
+    if (!result) return;
+    const lines = result.nodes.map(n => n.host + ':' + n.port);
+    nodeInput.value = lines.join('\n');
+    addSystemLine('Loaded ' + result.nodes.length + ' nodes from ' + result.filePath);
+  });
+
+  function parseNodeInput() {
+    return nodeInput.value
+      .split(/\r?\n/)
+      .map(l => l.trim())
+      .filter(l => l.length > 0)
+      .map(l => {
+        const [host, portStr] = l.split(':');
+        return { host, port: parseInt(portStr, 10) };
+      })
+      .filter(n => n.host && n.port);
+  }
+
+  document.getElementById('probeAllBtn').addEventListener('click', async () => {
+    const nodes = parseNodeInput();
+    if (nodes.length === 0) {
+      probeResults.innerHTML = '<div>No nodes to probe. Paste host:port lines or load SNodes.dat.</div>';
+      return;
+    }
+    if (!window.aresNet) {
+      probeResults.innerHTML = '<div>Network bridge not available.</div>';
+      return;
+    }
+    probeResults.innerHTML = '<div>Probing ' + nodes.length + ' node(s)...</div>';
+
+    const results = [];
+    const concurrency = 20;
+    let idx = 0;
+    async function worker() {
+      while (idx < nodes.length) {
+        const node = nodes[idx++];
+        const r = await window.aresNet.probeNode(node.host, node.port);
+        results.push(r);
+        render();
+      }
+    }
+    function render() {
+      const sorted = [...results].sort((a, b) => {
+        if (a.alive !== b.alive) return a.alive ? -1 : 1;
+        return (a.ms || 0) - (b.ms || 0);
+      });
+      probeResults.innerHTML = sorted.map(r =>
+        '<div>' + (r.alive ? '<span style="color:#007A33;">ALIVE</span>' : '<span style="color:#b30000;">dead</span>') +
+        ' ' + escapeHtml(r.host) + ':' + r.port +
+        (r.alive ? ' (' + r.ms + 'ms)' : ' (' + escapeHtml(r.error || '') + ')') +
+        '</div>'
+      ).join('') + '<div style="margin-top:4px;color:#888;">' + results.length + '/' + nodes.length + ' checked</div>';
+    }
+    const workers = Array.from({ length: Math.min(concurrency, nodes.length) }, worker);
+    await Promise.all(workers);
+  });
+</script>
+
+</body>
+</html>
