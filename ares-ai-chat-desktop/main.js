@@ -17,7 +17,7 @@ function createWindow() {
     }
   });
 
-  win.loadFile('index.html');
+  win.loadFile(path.join(__dirname, 'index.html'));
 }
 
 // Plain TCP connect probe - this matches what the real Ares client does in
@@ -66,7 +66,7 @@ ipcMain.handle('load-snodes-file', async () => {
     properties: ['openFile'],
     filters: [{ name: 'Ares node list', extensions: ['dat', 'txt'] }, { name: 'All files', extensions: ['*'] }]
   });
-  if (result.canceled || !result.filePaths[0]) return null;
+  if (result.canceled || !Array.isArray(result.filePaths) || result.filePaths.length === 0) return null;
   const text = fs.readFileSync(result.filePaths[0], 'utf8');
   const nodes = parseSNodesText(text);
   return { filePath: result.filePaths[0], nodes };
