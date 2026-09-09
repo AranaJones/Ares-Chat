@@ -392,33 +392,76 @@
   const saveBtn = document.getElementById('saveBtn');
   const cancelBtn = document.getElementById('cancelBtn');
 
-  let currentChannel = localStorage.getItem('ares_channel') || 'general';
+  function isKnownChannel(channel) {
+    return channels.includes(channel);
+  }
+
+  function getHashChannel() {
+    if (!location.hash || location.hash === '#') {
+      return null;
+    }
+
+    try {
+      const channel = decodeURIComponent(location.hash.slice(1));
+      return isKnownChannel(channel) ? channel : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  const storedChannel = localStorage.getItem('ares_channel');
+  let currentChannel = getHashChannel() || (isKnownChannel(storedChannel) ? storedChannel : 'general');
   let username = localStorage.getItem('ares_username') || 'Guest';
   let chatHistory = {};
+  localStorage.setItem('ares_channel', currentChannel);
 
   channels.forEach(ch => {
     const item = document.createElement('div');
+    item.dataset.channel = ch;
     item.className = `channel-item ${ch === currentChannel ? 'active' : ''}`;
     item.textContent = '#' + ch;
-    item.onclick = (e) => switchChannel(ch, e);
+    item.onclick = () => switchChannel(ch);
     channelList.appendChild(item);
 
     if (!chatHistory[ch]) {
-      chatHistory[ch] = [];
+      chatHistory[ch] = '';
     }
   });
 
   usernameDisplay.textContent = username;
 
-  function switchChannel(ch, e) {
+  function setActiveChannel(ch) {
+    document.querySelectorAll('.channel-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.channel === ch);
+    });
+  }
+
+  function updateChannelHash(ch) {
+    const nextHash = '#' + encodeURIComponent(ch);
+    if (location.hash !== nextHash) {
+      location.hash = nextHash;
+    }
+  }
+
+  function switchChannel(ch, options = {}) {
+    if (!isKnownChannel(ch)) {
+      return;
+    }
+
+    if (ch === currentChannel) {
+      setActiveChannel(ch);
+      if (!options.skipHashUpdate) {
+        updateChannelHash(ch);
+      }
+      return;
+    }
+
     chatHistory[currentChannel] = chatlog.innerHTML;
     currentChannel = ch;
     localStorage.setItem('ares_channel', ch);
-    document.querySelectorAll('.channel-item').forEach(item => {
-      item.classList.remove('active');
-    });
-    if (e && e.currentTarget) {
-      e.currentTarget.classList.add('active');
+    setActiveChannel(ch);
+    if (!options.skipHashUpdate) {
+      updateChannelHash(ch);
     }
     channelTitle.textContent = '#' + ch;
     chatlog.innerHTML = chatHistory[ch] || `<div class="message system"><span class="message-text">Joined #${ch}</span></div>`;
@@ -474,6 +517,13 @@
   sendBtn.addEventListener('click', handleSend);
   input.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleSend();
+  });
+
+  window.addEventListener('hashchange', () => {
+    const hashChannel = getHashChannel();
+    if (hashChannel) {
+      switchChannel(hashChannel, { skipHashUpdate: true });
+    }
   });
 
   channelTitle.textContent = '#' + currentChannel;
