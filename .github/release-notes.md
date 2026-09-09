@@ -24,7 +24,7 @@ Download the latest Windows installer:
 
 Or build from source:
 ```bash
-cd ares-ai-chat-desktop
+cd ares-chat
 npm install
 npm run dist
 ```

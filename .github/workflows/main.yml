@@ -10,7 +10,7 @@ jobs:
     runs-on: windows-latest
     defaults:
       run:
-        working-directory: ares-ai-chat-desktop
+        working-directory: ares-chat
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -30,4 +30,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ares-ai-chat-windows-installer
-          path: ares-ai-chat-desktop/dist/*.exe
+          path: ares-chat/dist/*.exe
