@@ -26,6 +26,11 @@ Enter your API key in Settings when prompted to enable AI_Helper.
 npm run dist
 ```
 
+## Download a prebuilt installer
+
+The latest Windows installer is available from GitHub Releases:
+- https://github.com/AranaJones/Ares-Chat/releases
+
 ## What's real vs. simulated
 
 **AI_Helper chat**: fully real - talks to the actual Anthropic API.
