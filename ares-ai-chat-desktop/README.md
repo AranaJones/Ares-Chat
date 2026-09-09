@@ -10,6 +10,19 @@ experimental network panel for probing real Ares Galaxy supernodes.
 - An Anthropic API key from https://console.anthropic.com for the AI_Helper
   chat participant (not needed for the network probe panel)
 
+## Share links (URL hash)
+
+The app can generate and load share links through the URL hash. This lets you
+share lightweight UI state (current channel + message draft) without changing
+the app's JS-first runtime.
+
+- Click **Copy Share Link** in the header.
+- The link includes a URL-safe encoded hash payload.
+- Opening the link restores the shared channel (if available) and pre-fills the
+  message input.
+- If the hash is malformed, the app ignores it and shows a non-fatal system
+  message.
+
 ## Run it in development
 
 ```bash
@@ -19,6 +32,25 @@ npm start
 ```
 
 Enter your API key in Settings when prompted to enable AI_Helper.
+
+## Optional HashLink (Haxe HL) tooling
+
+> The desktop app remains HTML/JavaScript + Electron. HashLink setup here is
+> optional scaffolding only.
+
+Prerequisites:
+- [Haxe](https://haxe.org/download/)
+- [HashLink](https://hashlink.haxe.org/)
+
+Optional helper scripts:
+
+```bash
+npm run hl:check
+npm run hl:build-sample
+npm run hl:run-sample
+```
+
+See `tools/hashlink/README.md` for platform notes and sample details.
 
 ## Build a real installer (.exe / .app / .AppImage)
 
@@ -70,6 +102,15 @@ against `MSG_CLIENT_LOGIN_REQ` / `MSG_SUPERNODE_FIRST_LOG` in
   machine only.
 - Conversation history resets each time you restart the app.
 
+## Quick verification steps
+
+1. Start the app with no URL hash (`npm start`) and confirm normal behavior.
+2. Type draft text, switch channels if needed, then click **Copy Share Link**.
+3. Open the copied link and confirm:
+   - channel selection round-trips when channel exists
+   - draft text is restored in the input box
+4. Manually edit the hash to invalid data and confirm the app still loads.
+
 ## Project structure
 
 - `main.js` - Electron main process (window, IPC handlers for TCP probing
@@ -80,4 +121,6 @@ against `MSG_CLIENT_LOGIN_REQ` / `MSG_SUPERNODE_FIRST_LOG` in
 - `ares-nodes.js` - parses SNodes.dat text format and the binary node
   candidate wire format
 - `index.html` - the UI and chat/network logic
+- `hash-link.js` - hash share-link encode/decode + validation helpers
 - `package.json` - dependencies and build config
+- `tools/hashlink/` - optional Haxe/HashLink sample scaffold

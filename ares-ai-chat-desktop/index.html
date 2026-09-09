@@ -139,6 +139,29 @@
     flex: 0 0 auto;
   }
 
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  .share-btn {
+    padding: 6px 10px;
+    background: #34495e;
+    color: white;
+    border: 1px solid #4a6178;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+
+  .share-btn:hover {
+    background: #2c3e50;
+  }
+
   .chatlog {
     flex: 1;
     overflow-y: auto;
@@ -354,7 +377,10 @@
         <img src="assets/ares-logo.png" alt="Ares Galaxy logo" class="brand-logo" />
         <h2 id="channelTitle">#general</h2>
       </div>
-      <div class="username" id="usernameDisplay">Guest</div>
+      <div class="header-actions">
+        <button class="share-btn" id="copyShareBtn" type="button">Copy Share Link</button>
+        <div class="username" id="usernameDisplay">Guest</div>
+      </div>
     </div>
     <div class="chatlog" id="chatlog"></div>
     <div class="inputbar">
@@ -378,11 +404,13 @@
   </div>
 </div>
 
+<script src="hash-link.js"></script>
 <script>
   const channels = ['general', 'off-topic', 'gaming', 'music', 'tech', 'random'];
   const chatlog = document.getElementById('chatlog');
   const input = document.getElementById('msgInput');
   const sendBtn = document.getElementById('sendBtn');
+  const copyShareBtn = document.getElementById('copyShareBtn');
   const channelTitle = document.getElementById('channelTitle');
   const channelList = document.getElementById('channelList');
   const usernameDisplay = document.getElementById('usernameDisplay');
@@ -395,6 +423,22 @@
   let currentChannel = localStorage.getItem('ares_channel') || 'general';
   let username = localStorage.getItem('ares_username') || 'Guest';
   let chatHistory = {};
+  let pendingHashShareState = null;
+  let pendingHashShareError = null;
+
+  if (window.aresHashLink && typeof window.aresHashLink.parseHash === 'function') {
+    const parsedShare = window.aresHashLink.parseHash(window.location.hash);
+    if (parsedShare.ok && parsedShare.hasShare) {
+      pendingHashShareState = parsedShare.state;
+      if (pendingHashShareState.channel && channels.includes(pendingHashShareState.channel)) {
+        currentChannel = pendingHashShareState.channel;
+      } else if (pendingHashShareState.channel) {
+        pendingHashShareError = 'Share link channel is not available in this app.';
+      }
+    } else if (!parsedShare.ok) {
+      pendingHashShareError = parsedShare.error;
+    }
+  }
 
   channels.forEach(ch => {
     const item = document.createElement('div');
@@ -472,6 +516,35 @@
   });
 
   sendBtn.addEventListener('click', handleSend);
+  copyShareBtn.addEventListener('click', async () => {
+    if (!window.aresHashLink || typeof window.aresHashLink.createShareUrl !== 'function') {
+      addMessage('System', 'Share link feature is unavailable in this build.');
+      return;
+    }
+
+    try {
+      const shareUrl = window.aresHashLink.createShareUrl(
+        { channel: currentChannel, text: input.value },
+        window.location.href
+      );
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const fallback = document.createElement('textarea');
+        fallback.value = shareUrl;
+        fallback.setAttribute('readonly', '');
+        fallback.style.position = 'fixed';
+        fallback.style.opacity = '0';
+        document.body.appendChild(fallback);
+        fallback.select();
+        document.execCommand('copy');
+        document.body.removeChild(fallback);
+      }
+      addMessage('System', 'Share link copied to clipboard.', true);
+    } catch (err) {
+      addMessage('System', 'Unable to create share link.');
+    }
+  });
   input.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleSend();
   });
@@ -481,6 +554,15 @@
     chatlog.innerHTML = chatHistory[currentChannel];
   } else {
     addMessage('System', `Welcome to #${currentChannel}, ${username}!`);
+  }
+  if (pendingHashShareState && typeof pendingHashShareState.text === 'string') {
+    input.value = pendingHashShareState.text;
+  }
+  if (pendingHashShareState) {
+    addMessage('System', 'Loaded share link.', true);
+  }
+  if (pendingHashShareError) {
+    addMessage('System', `Could not load share link: ${pendingHashShareError}`);
   }
   input.focus();
 </script>

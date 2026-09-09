@@ -4,7 +4,10 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "hl:check": "haxe --version && hl --version",
+    "hl:build-sample": "haxe --cwd tools/hashlink build.hxml",
+    "hl:run-sample": "npm run hl:build-sample && hl tools/hashlink/hello.hl"
   },
   "devDependencies": {
     "electron": "^28.0.0",
