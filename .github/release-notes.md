@@ -19,8 +19,8 @@
 
 ## Installation
 
-Download the latest Windows installer:
-- **Ares.AI.Chat.Setup.1.1.0.exe** - Windows 10/11
+Download the latest Windows installer from the GitHub Releases page:
+- https://github.com/AranaJones/Ares-Chat/releases
 
 Or build from source:
 ```bash
