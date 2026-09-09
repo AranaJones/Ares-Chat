@@ -1,7 +1,7 @@
 {
-  "name": "ares-ai-chat",
-  "productName": "Ares AI Chat",
-  "version": "1.0.0",
+  "name": "ares-chat",
+  "productName": "Ares Chat",
+  "version": "1.1.0",
   "description": "A retro Ares Galaxy-style chatroom with an LLM-powered chat participant",
   "main": "main.js",
   "scripts": {
@@ -13,8 +13,8 @@
     "electron-builder": "^24.13.3"
   },
   "build": {
-    "appId": "com.example.aresaichat",
-    "productName": "Ares AI Chat",
+    "appId": "com.example.areschat",
+    "productName": "Ares Chat",
     "directories": { "output": "dist" },
     "files": ["main.js", "preload.js", "index.html", "ares-crypto.js", "ares-nodes.js"],
     "mac": { "category": "public.app-category.social-networking" },
