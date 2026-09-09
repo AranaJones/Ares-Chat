@@ -278,6 +278,36 @@
     text-decoration: underline;
   }
 
+  .about-section {
+    padding: 12px;
+    background: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    color: #2c3e50;
+  }
+
+  .about-section p {
+    margin: 0 0 8px;
+    line-height: 1.5;
+  }
+
+  .about-section p:last-child {
+    margin-bottom: 0;
+  }
+
+  .about-section a {
+    color: #3498db;
+    text-decoration: none;
+  }
+
+  .about-section a:hover {
+    text-decoration: underline;
+  }
+
+  .about-label {
+    font-weight: bold;
+  }
+
   .modal-actions {
     display: flex;
     gap: 8px;
@@ -347,7 +377,16 @@
     <div class="modal-field">
       <label>Releases & Updates:</label>
       <div class="info-link">
-        <a href="https://github.com/AranaJones/Ares-AI/releases/tag/Ares" target="_blank">📦 Download Latest Release</a>
+        <a href="https://github.com/AranaJones/Ares-AI/releases/tag/Ares" target="_blank" rel="noreferrer">📦 Download Latest Release</a>
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>About:</label>
+      <div class="about-section">
+        <p>Ares-Chat is a retro Ares Galaxy-style desktop chatroom interface built with Electron.</p>
+        <p><span class="about-label">Created by</span> <a href="https://github.com/AranaJones" target="_blank" rel="noreferrer">AranaJones</a></p>
+        <p><span class="about-label">Repository:</span> <a href="https://github.com/AranaJones/Ares-Chat" target="_blank" rel="noreferrer">github.com/AranaJones/Ares-Chat</a></p>
+        <p><span class="about-label">Version:</span> <span id="appVersion">Loading...</span></p>
       </div>
     </div>
     <div class="modal-actions">
@@ -368,6 +407,7 @@
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsModal = document.getElementById('settingsModal');
   const usernameInput = document.getElementById('usernameInput');
+  const appVersion = document.getElementById('appVersion');
   const saveBtn = document.getElementById('saveBtn');
   const cancelBtn = document.getElementById('cancelBtn');
 
@@ -391,6 +431,7 @@
 
   // Update username display
   usernameDisplay.textContent = username;
+  appVersion.textContent = window.aresApp?.version || 'Unknown';
 
   function switchChannel(ch, e) {
     // Save current channel
