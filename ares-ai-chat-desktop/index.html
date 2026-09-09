@@ -60,10 +60,21 @@
     overflow-y: auto;
   }
 
+  .sidebar-section {
+    border-top: 1px solid #34495e;
+  }
+
+  .sidebar-subheader {
+    padding: 8px 10px 4px;
+    color: #95a5a6;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
   .sidebar-footer {
     padding: 10px;
     border-top: 1px solid #34495e;
-    margin-top: auto;
   }
 
   .settings-btn {
@@ -343,6 +354,10 @@
   <div class="sidebar">
     <div class="sidebar-header">Channels</div>
     <div id="channelList"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-subheader">User</div>
+      <div id="userList"></div>
+    </div>
     <div class="sidebar-footer">
       <button class="settings-btn" id="settingsBtn">⚙️ Settings</button>
     </div>
@@ -385,6 +400,7 @@
   const sendBtn = document.getElementById('sendBtn');
   const channelTitle = document.getElementById('channelTitle');
   const channelList = document.getElementById('channelList');
+  const userList = document.getElementById('userList');
   const usernameDisplay = document.getElementById('usernameDisplay');
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsModal = document.getElementById('settingsModal');
@@ -395,6 +411,21 @@
   let currentChannel = localStorage.getItem('ares_channel') || 'general';
   let username = localStorage.getItem('ares_username') || 'Guest';
   let chatHistory = {};
+  let userItem;
+
+  function openSettingsModal() {
+    usernameInput.value = username;
+    settingsModal.classList.add('show');
+    usernameInput.focus();
+  }
+
+  function updateUserDisplays() {
+    const displayName = username || 'Guest';
+    usernameDisplay.textContent = displayName;
+    if (userItem) {
+      userItem.textContent = '@' + displayName;
+    }
+  }
 
   channels.forEach(ch => {
     const item = document.createElement('div');
@@ -408,7 +439,12 @@
     }
   });
 
-  usernameDisplay.textContent = username;
+  userItem = document.createElement('div');
+  userItem.className = 'channel-item';
+  userItem.onclick = openSettingsModal;
+  userList.appendChild(userItem);
+
+  updateUserDisplays();
 
   function switchChannel(ch, e) {
     chatHistory[currentChannel] = chatlog.innerHTML;
@@ -446,18 +482,14 @@
     input.focus();
   }
 
-  settingsBtn.addEventListener('click', () => {
-    usernameInput.value = username;
-    settingsModal.classList.add('show');
-    usernameInput.focus();
-  });
+  settingsBtn.addEventListener('click', openSettingsModal);
 
   saveBtn.addEventListener('click', () => {
     const newUsername = usernameInput.value.trim();
     if (newUsername) {
       username = newUsername;
       localStorage.setItem('ares_username', username);
-      usernameDisplay.textContent = username;
+      updateUserDisplays();
       addMessage('System', `${username} changed their username`);
     }
     settingsModal.classList.remove('show');
