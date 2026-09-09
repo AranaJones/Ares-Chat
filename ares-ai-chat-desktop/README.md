@@ -20,6 +20,27 @@ npm start
 
 Enter your API key in Settings when prompted to enable AI_Helper.
 
+## Windows launcher (.exe)
+
+A lightweight native Windows launcher lives in `../windows-launcher/ares-chat`.
+It opens a small desktop window with a `Launch Ares Chat` button and then:
+
+1. starts a built `ares-ai-chat-desktop/dist/win-unpacked/Ares Chat.exe` when one exists, or
+2. falls back to `npm start` inside `ares-ai-chat-desktop`.
+
+Build the launcher into a Windows `.exe` with:
+
+```bash
+cd ../windows-launcher/ares-chat
+dotnet publish -c Release -r win-x64 --self-contained false
+```
+
+The published launcher executable will be written under:
+
+```
+windows-launcher/ares-chat/bin/Release/net8.0-windows/win-x64/publish/ares-chat.exe
+```
+
 ## Build a real installer (.exe / .app / .AppImage)
 
 ```bash
