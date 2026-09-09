@@ -36,6 +36,24 @@
     font-weight: bold;
     border-bottom: 1px solid #34495e;
     margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .refresh-btn {
+    background: #34495e;
+    color: white;
+    border: 1px solid #4a6278;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 4px 6px;
+  }
+
+  .refresh-btn:hover {
+    background: #3f5870;
   }
 
   .channel-item {
@@ -58,6 +76,18 @@
   #channelList {
     flex: 1;
     overflow-y: auto;
+  }
+
+  .channel-status {
+    padding: 6px 10px 8px;
+    font-size: 11px;
+    color: #bdc3c7;
+    border-top: 1px solid #34495e;
+    min-height: 28px;
+  }
+
+  .channel-status.error {
+    color: #f5b7b1;
   }
 
   .sidebar-footer {
@@ -341,8 +371,12 @@
 
 <div class="container">
   <div class="sidebar">
-    <div class="sidebar-header">Channels</div>
+    <div class="sidebar-header">
+      <span>Channels</span>
+      <button class="refresh-btn" id="refreshChannelsBtn" title="Refresh channels">↻</button>
+    </div>
     <div id="channelList"></div>
+    <div class="channel-status" id="channelStatus"></div>
     <div class="sidebar-footer">
       <button class="settings-btn" id="settingsBtn">⚙️ Settings</button>
     </div>
@@ -371,6 +405,11 @@
       <label for="usernameInput">Username:</label>
       <input type="text" id="usernameInput" placeholder="Enter your username" maxlength="20" />
     </div>
+    <div class="modal-field">
+      <label for="channelFeedUrlInput">Ares channel feed URL (optional):</label>
+      <input type="url" id="channelFeedUrlInput" placeholder="https://example.com/ares-channels.json" />
+      <div class="info-link">JSON format: <code>["general"]</code> or <code>{"channels":["general"]}</code></div>
+    </div>
     <div class="modal-actions">
       <button class="save" id="saveBtn">Save</button>
       <button class="cancel" id="cancelBtn">Cancel</button>
@@ -379,46 +418,140 @@
 </div>
 
 <script>
-  const channels = ['general', 'off-topic', 'gaming', 'music', 'tech', 'random'];
+  const defaultChannels = ['general', 'off-topic', 'gaming', 'music', 'tech', 'random'];
+  const CHANNEL_REFRESH_INTERVAL_MS = 60000;
   const chatlog = document.getElementById('chatlog');
   const input = document.getElementById('msgInput');
   const sendBtn = document.getElementById('sendBtn');
   const channelTitle = document.getElementById('channelTitle');
   const channelList = document.getElementById('channelList');
+  const channelStatus = document.getElementById('channelStatus');
   const usernameDisplay = document.getElementById('usernameDisplay');
   const settingsBtn = document.getElementById('settingsBtn');
+  const refreshChannelsBtn = document.getElementById('refreshChannelsBtn');
   const settingsModal = document.getElementById('settingsModal');
   const usernameInput = document.getElementById('usernameInput');
+  const channelFeedUrlInput = document.getElementById('channelFeedUrlInput');
   const saveBtn = document.getElementById('saveBtn');
   const cancelBtn = document.getElementById('cancelBtn');
 
+  let channels = [...defaultChannels];
   let currentChannel = localStorage.getItem('ares_channel') || 'general';
   let username = localStorage.getItem('ares_username') || 'Guest';
+  let channelFeedUrl = localStorage.getItem('ares_channel_feed_url') || '';
   let chatHistory = {};
+  let isRefreshingChannels = false;
 
-  channels.forEach(ch => {
-    const item = document.createElement('div');
-    item.className = `channel-item ${ch === currentChannel ? 'active' : ''}`;
-    item.textContent = '#' + ch;
-    item.onclick = (e) => switchChannel(ch, e);
-    channelList.appendChild(item);
+  function sanitizeChannelName(value) {
+    if (typeof value !== 'string') return null;
+    const clean = value.trim().replace(/^#/, '');
+    return clean || null;
+  }
 
+  function ensureChannelHistory(ch) {
     if (!chatHistory[ch]) {
-      chatHistory[ch] = [];
+      chatHistory[ch] = '';
     }
-  });
+  }
+
+  function setChannelStatus(text, isError = false) {
+    channelStatus.textContent = text;
+    channelStatus.classList.toggle('error', isError);
+  }
+
+  function renderChannelList() {
+    channelList.innerHTML = '';
+    channels.forEach(ch => {
+      ensureChannelHistory(ch);
+      const item = document.createElement('div');
+      item.className = `channel-item ${ch === currentChannel ? 'active' : ''}`;
+      item.textContent = '#' + ch;
+      item.onclick = (e) => switchChannel(ch, e.currentTarget);
+      channelList.appendChild(item);
+    });
+  }
+
+  function parseChannelsPayload(payload) {
+    const raw = Array.isArray(payload) ? payload : payload && Array.isArray(payload.channels) ? payload.channels : [];
+    const unique = new Set();
+    const parsed = [];
+
+    raw.forEach((item) => {
+      const candidate = typeof item === 'string' ? item : (item && (item.name || item.channel || item.title));
+      const channel = sanitizeChannelName(candidate);
+      if (channel && !unique.has(channel)) {
+        unique.add(channel);
+        parsed.push(channel);
+      }
+    });
+
+    return parsed;
+  }
+
+  async function refreshChannels() {
+    if (isRefreshingChannels) return;
+    isRefreshingChannels = true;
+    refreshChannelsBtn.disabled = true;
+    setChannelStatus('Loading channels...');
+
+    try {
+      if (!channelFeedUrl) {
+        channels = [...defaultChannels];
+        if (!channels.includes(currentChannel)) {
+          currentChannel = channels[0];
+          localStorage.setItem('ares_channel', currentChannel);
+          switchChannel(currentChannel);
+        }
+        renderChannelList();
+        setChannelStatus('Using built-in channels. Add a feed URL in Settings for live data.');
+        return;
+      }
+
+      const response = await fetch(channelFeedUrl, { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const payload = await response.json();
+      const nextChannels = parseChannelsPayload(payload);
+      if (!nextChannels.length) {
+        setChannelStatus('No channels returned by source.');
+        return;
+      }
+
+      channels = nextChannels;
+      if (!channels.includes(currentChannel)) {
+        switchChannel(channels[0]);
+      } else {
+        renderChannelList();
+      }
+      setChannelStatus(`Updated ${channels.length} channel${channels.length === 1 ? '' : 's'}.`);
+    } catch (err) {
+      setChannelStatus(`Unable to refresh channels: ${err.message}`, true);
+    } finally {
+      isRefreshingChannels = false;
+      refreshChannelsBtn.disabled = false;
+    }
+  }
 
   usernameDisplay.textContent = username;
+  renderChannelList();
+  refreshChannels();
+  setInterval(() => refreshChannels(), CHANNEL_REFRESH_INTERVAL_MS);
 
-  function switchChannel(ch, e) {
+  function switchChannel(ch, activeItemEl) {
+    ensureChannelHistory(currentChannel);
     chatHistory[currentChannel] = chatlog.innerHTML;
     currentChannel = ch;
     localStorage.setItem('ares_channel', ch);
+    ensureChannelHistory(ch);
     document.querySelectorAll('.channel-item').forEach(item => {
       item.classList.remove('active');
     });
-    if (e && e.currentTarget) {
-      e.currentTarget.classList.add('active');
+    if (activeItemEl) {
+      activeItemEl.classList.add('active');
+    } else {
+      renderChannelList();
     }
     channelTitle.textContent = '#' + ch;
     chatlog.innerHTML = chatHistory[ch] || `<div class="message system"><span class="message-text">Joined #${ch}</span></div>`;
@@ -448,19 +581,27 @@
 
   settingsBtn.addEventListener('click', () => {
     usernameInput.value = username;
+    channelFeedUrlInput.value = channelFeedUrl;
     settingsModal.classList.add('show');
     usernameInput.focus();
   });
 
   saveBtn.addEventListener('click', () => {
     const newUsername = usernameInput.value.trim();
+    const newFeedUrl = channelFeedUrlInput.value.trim();
+    const feedChanged = newFeedUrl !== channelFeedUrl;
     if (newUsername) {
       username = newUsername;
       localStorage.setItem('ares_username', username);
       usernameDisplay.textContent = username;
       addMessage('System', `${username} changed their username`);
     }
+    channelFeedUrl = newFeedUrl;
+    localStorage.setItem('ares_channel_feed_url', channelFeedUrl);
     settingsModal.classList.remove('show');
+    if (feedChanged) {
+      refreshChannels();
+    }
   });
 
   cancelBtn.addEventListener('click', () => {
@@ -470,6 +611,12 @@
   usernameInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') saveBtn.click();
   });
+
+  channelFeedUrlInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') saveBtn.click();
+  });
+
+  refreshChannelsBtn.addEventListener('click', () => refreshChannels());
 
   sendBtn.addEventListener('click', handleSend);
   input.addEventListener('keypress', (e) => {
