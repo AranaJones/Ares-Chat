@@ -2,7 +2,7 @@
   "name": "ares-chat",
   "productName": "Ares Chat",
   "version": "1.1.0",
-  "description": "A retro Ares Galaxy-style chatroom with an LLM-powered chat participant",
+  "description": "A retro Ares Galaxy-style desktop chatroom with supernode utilities",
   "main": "main.js",
   "scripts": {
     "start": "electron .",

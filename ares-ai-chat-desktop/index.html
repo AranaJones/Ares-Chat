@@ -347,7 +347,7 @@
     <div class="modal-field">
       <label>Releases & Updates:</label>
       <div class="info-link">
-        <a href="https://github.com/AranaJones/Ares-AI/releases/tag/Ares" target="_blank">📦 Download Latest Release</a>
+        <a href="https://github.com/AranaJones/Ares-Chat/releases/latest" target="_blank" rel="noopener noreferrer">📦 Download Latest Release</a>
       </div>
     </div>
     <div class="modal-actions">
@@ -427,13 +427,13 @@
   }
 
   function checkForUpdates() {
-    fetch('https://api.github.com/repos/AranaJones/Ares-AI/commits?per_page=1')
+    fetch('https://api.github.com/repos/AranaJones/Ares-Chat/commits?per_page=1')
       .then(r => r.json())
       .then(data => {
         if (data.length > 0) {
           const latestCommit = data[0].sha;
           if (lastCommitHash && latestCommit !== lastCommitHash) {
-            addMessage('System', `🔄 NEW VERSION AVAILABLE! Check GitHub for updates: https://github.com/AranaJones/Ares-AI/releases/tag/Ares`, true);
+            addMessage('System', '🔄 NEW VERSION AVAILABLE! Check GitHub for updates: https://github.com/AranaJones/Ares-Chat/releases/latest', true);
           }
           localStorage.setItem('ares_last_commit', latestCommit);
           lastCommitHash = latestCommit;

@@ -29,5 +29,5 @@ jobs:
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ares-ai-chat-windows-installer
+          name: ares-chat-windows-installer
           path: ares-ai-chat-desktop/dist/*.exe
