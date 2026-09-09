@@ -1,4 +1,4 @@
-# Ares AI Chat v1.1.0
+# Ares Chat v1.1.0
 
 ## What's New
 
@@ -34,4 +34,4 @@ npm run dist
 - Network supernode handshake not fully implemented (see README for details)
 
 ## Thank You
-Thanks for using Ares AI Chat! For issues, suggestions, or feature requests, visit the [GitHub repository](https://github.com/AranaJones/Ares-Chat).
+Thanks for using Ares Chat! For issues, suggestions, or feature requests, visit the [GitHub repository](https://github.com/AranaJones/Ares-Chat).
