@@ -1,37 +1,18 @@
-# Ares AI Chat v1.1.0
+# Ares Chat release notes
 
-## What's New
+Update this file before tagging a release so the published GitHub Release gets the right summary.
 
-### Features
-- 🎯 **Multiple Public Channels** - Support for multiple public channels with easy switching via vertical sidebar
-- ⚙️ **Settings Modal** - New settings panel for username configuration
-- 🔔 **Update Notifications** - Automatic version checking system that notifies users of new releases
-- 🔗 **In-App Release Link** - Quick access to latest releases from the settings modal
+## Highlights
 
-### Improvements
-- 🎨 **Improved UI** - Simplified chat interface with vertical channels list sidebar (replaces horizontal channel bar)
-- 🐛 **Channel Switching Fixes** - Fixed event handling for reliable channel switching
-- 🧹 **Code Cleanup** - Removed unnecessary features for streamlined experience
+- Retro-styled Electron desktop chat UI with per-channel message history
+- Username settings stored locally between launches
+- Packaged Windows installer published automatically from version tags
 
-### Technical Updates
-- Fixed channel switching event handling in index.html
-- Streamlined UI components for better performance
+## Build artifacts
 
-## Installation
+- Windows installer executable (`*.exe`)
 
-Download the latest Windows installer from the GitHub Releases page:
-- https://github.com/AranaJones/Ares-Chat/releases
+## Notes
 
-Or build from source:
-```bash
-cd ares-ai-chat-desktop
-npm install
-npm run dist
-```
-
-## Known Limitations
-- Conversation history resets on app restart
-- Network supernode handshake not fully implemented (see README for details)
-
-## Thank You
-Thanks for using Ares AI Chat! For issues, suggestions, or feature requests, visit the [GitHub repository](https://github.com/AranaJones/Ares-Chat).
+- Installer builds are created by `.github/workflows/main.yml`
+- The release tag must match `ares-ai-chat-desktop/package.json` (for example `v1.0.0`)
