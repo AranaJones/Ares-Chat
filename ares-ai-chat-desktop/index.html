@@ -381,7 +381,7 @@
     const item = document.createElement('div');
     item.className = `channel-item ${ch === currentChannel ? 'active' : ''}`;
     item.textContent = '#' + ch;
-    item.onclick = () => switchChannel(ch);
+    item.onclick = (e) => switchChannel(ch, e);
     channelList.appendChild(item);
     
     if (!chatHistory[ch]) {
@@ -392,7 +392,7 @@
   // Update username display
   usernameDisplay.textContent = username;
 
-  function switchChannel(ch) {
+  function switchChannel(ch, e) {
     // Save current channel
     chatHistory[currentChannel] = chatlog.innerHTML;
     
@@ -404,7 +404,9 @@
     document.querySelectorAll('.channel-item').forEach(item => {
       item.classList.remove('active');
     });
-    event.target.classList.add('active');
+    if (e && e.currentTarget) {
+      e.currentTarget.classList.add('active');
+    }
     
     channelTitle.textContent = '#' + ch;
     chatlog.innerHTML = chatHistory[ch] || `<div class="message system"><span class="message-text">Joined #${ch}</span></div>`;
