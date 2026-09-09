@@ -20,20 +20,54 @@ npm start
 
 Enter your API key in Settings when prompted to enable AI_Helper.
 
+By default the desktop app now also starts a bundled WebSocket relay for the
+real `#ares-live` room on `ws://127.0.0.1:34567/ares-live`, so multiple app
+windows on the same machine can join the same live channel immediately.
+
 ## Build a real installer (.exe / .app / .AppImage)
 
 ```bash
 npm run dist
 ```
 
+The bundled `#ares-live` relay is included in the packaged app, so the
+installer workflow stays the same.
+
 ## Download a prebuilt installer
 
 The latest Windows installer is available from GitHub Releases:
 - https://github.com/AranaJones/Ares-Chat/releases
 
+## Live channel
+
+`#ares-live` is a real shared channel backed by a small WebSocket relay:
+
+- Open two copies of the desktop app and join `#ares-live` to see messages
+  appear in both windows in real time.
+- The other channels remain local-only, just like before.
+- In **Settings**, you can optionally point the live channel at another relay
+  URL (for example a relay running on a different PC).
+
+To run the relay by itself for other machines on your network:
+
+```bash
+cd ares-ai-chat-desktop
+npm install
+npm run live-channel-server -- --host 0.0.0.0 --port 34567
+```
+
+Then set **Live channel server URL** in each app instance to:
+
+```text
+ws://YOUR_HOST_OR_IP:34567/ares-live
+```
+
 ## What's real vs. simulated
 
 **AI_Helper chat**: fully real - talks to the actual Anthropic API.
+
+**`#ares-live` chatroom**: fully real - messages are broadcast over the live
+WebSocket relay and replayed to new clients from recent history.
 
 **"Network (supernodes)" panel**: this is a genuine, working implementation
 of the *first* step the real Ares Galaxy client does - a plain TCP connect
@@ -68,13 +102,17 @@ against `MSG_CLIENT_LOGIN_REQ` / `MSG_SUPERNODE_FIRST_LOG` in
 
 - The Anthropic API key is stored in the app's local storage on your
   machine only.
-- Conversation history resets each time you restart the app.
+- The bundled live relay keeps recent `#ares-live` messages in memory only, so
+  live history resets when that relay process stops.
+- Local-only channel history remains local to each app instance.
 
 ## Project structure
 
 - `main.js` - Electron main process (window, IPC handlers for TCP probing
-  and loading SNodes.dat)
-- `preload.js` - exposes `window.aresNet` (probe/load) to the renderer
+  and loading SNodes.dat, plus the bundled live channel relay config)
+- `preload.js` - exposes `window.aresNet` (probe/load/live channel config) to
+  the renderer
+- `live-channel-server.js` - the minimal WebSocket relay used by `#ares-live`
 - `ares-crypto.js` - the d64 XOR stream cipher, with the discrepancy in the
   paper's worked example surfaced via `verifyD64()` rather than hidden
 - `ares-nodes.js` - parses SNodes.dat text format and the binary node

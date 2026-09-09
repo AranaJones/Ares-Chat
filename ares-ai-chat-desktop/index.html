@@ -55,6 +55,23 @@
     font-weight: bold;
   }
 
+  .channel-item-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .channel-item-badge {
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.2);
+    color: #d6eaf8;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
   #channelList {
     flex: 1;
     overflow-y: auto;
@@ -137,6 +154,30 @@
     color: #bdc3c7;
     white-space: nowrap;
     flex: 0 0 auto;
+  }
+
+  .header-status {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.1);
+    color: #ecf0f1;
+    flex: 0 0 auto;
+  }
+
+  .header-status[data-state="connected"] {
+    background: rgba(39, 174, 96, 0.25);
+    color: #d5f4e6;
+  }
+
+  .header-status[data-state="connecting"] {
+    background: rgba(241, 196, 15, 0.25);
+    color: #fcf3cf;
+  }
+
+  .header-status[data-state="offline"] {
+    background: rgba(231, 76, 60, 0.25);
+    color: #fadbd8;
   }
 
   .chatlog {
@@ -354,6 +395,7 @@
         <img src="assets/ares-logo.png" alt="Ares Galaxy logo" class="brand-logo" />
         <h2 id="channelTitle">#general</h2>
       </div>
+      <div class="header-status" id="liveStatus" data-state="offline">Local-only channels</div>
       <div class="username" id="usernameDisplay">Guest</div>
     </div>
     <div class="chatlog" id="chatlog"></div>
@@ -371,6 +413,11 @@
       <label for="usernameInput">Username:</label>
       <input type="text" id="usernameInput" placeholder="Enter your username" maxlength="20" />
     </div>
+    <div class="modal-field">
+      <label for="liveServerUrlInput">Live channel server URL:</label>
+      <input type="text" id="liveServerUrlInput" placeholder="ws://127.0.0.1:34567/ares-live" />
+      <div class="info-link">Leave blank to use the bundled local relay.</div>
+    </div>
     <div class="modal-actions">
       <button class="save" id="saveBtn">Save</button>
       <button class="cancel" id="cancelBtn">Cancel</button>
@@ -379,39 +426,91 @@
 </div>
 
 <script>
-  const channels = ['general', 'off-topic', 'gaming', 'music', 'tech', 'random'];
+  const LIVE_CHANNEL_ID = 'ares-live';
+  const channels = [
+    { id: LIVE_CHANNEL_ID, label: 'ares-live', live: true },
+    { id: 'general', label: 'general', live: false },
+    { id: 'off-topic', label: 'off-topic', live: false },
+    { id: 'gaming', label: 'gaming', live: false },
+    { id: 'music', label: 'music', live: false },
+    { id: 'tech', label: 'tech', live: false },
+    { id: 'random', label: 'random', live: false }
+  ];
   const chatlog = document.getElementById('chatlog');
   const input = document.getElementById('msgInput');
   const sendBtn = document.getElementById('sendBtn');
   const channelTitle = document.getElementById('channelTitle');
   const channelList = document.getElementById('channelList');
+  const liveStatus = document.getElementById('liveStatus');
   const usernameDisplay = document.getElementById('usernameDisplay');
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsModal = document.getElementById('settingsModal');
   const usernameInput = document.getElementById('usernameInput');
+  const liveServerUrlInput = document.getElementById('liveServerUrlInput');
   const saveBtn = document.getElementById('saveBtn');
   const cancelBtn = document.getElementById('cancelBtn');
 
-  let currentChannel = localStorage.getItem('ares_channel') || 'general';
+  let currentChannel = localStorage.getItem('ares_channel') || LIVE_CHANNEL_ID;
   let username = localStorage.getItem('ares_username') || 'Guest';
-  let chatHistory = {};
+  let liveServerUrlOverride = localStorage.getItem('ares_live_server_url') || '';
+  let liveChannelConfig = null;
+  let liveSocket = null;
+  let liveReconnectTimer = null;
+  let liveSocketUrl = '';
+  let liveMessages = [];
+  let liveStatusState = 'offline';
+  const localMessages = {};
 
-  channels.forEach(ch => {
+  const channelMap = new Map(channels.map((channel) => [channel.id, channel]));
+
+  if (!channelMap.has(currentChannel)) {
+    currentChannel = LIVE_CHANNEL_ID;
+  }
+
+  channels.forEach((channel) => {
     const item = document.createElement('div');
-    item.className = `channel-item ${ch === currentChannel ? 'active' : ''}`;
-    item.textContent = '#' + ch;
-    item.onclick = (e) => switchChannel(ch, e);
+    item.className = `channel-item ${channel.id === currentChannel ? 'active' : ''}`;
+    item.dataset.channel = channel.id;
+    item.onclick = (e) => switchChannel(channel.id, e);
+    item.innerHTML = `<div class="channel-item-label"><span>#${channel.label}</span>${channel.live ? '<span class="channel-item-badge">live</span>' : ''}</div>`;
     channelList.appendChild(item);
 
-    if (!chatHistory[ch]) {
-      chatHistory[ch] = [];
+    if (!channel.live) {
+      localMessages[channel.id] = [];
     }
   });
 
   usernameDisplay.textContent = username;
 
+  function buildSystemMessage(text, type = 'system') {
+    return {
+      type,
+      user: type === 'system' ? 'System' : '',
+      text,
+      sentAt: new Date().toISOString()
+    };
+  }
+
+  function getChannel(channelId) {
+    return channelMap.get(channelId);
+  }
+
+  function isLiveChannel(channelId) {
+    const channel = getChannel(channelId);
+    return Boolean(channel && channel.live);
+  }
+
+  function ensureLocalChannelMessages(channelId) {
+    if (!localMessages[channelId]) {
+      localMessages[channelId] = [];
+    }
+
+    if (localMessages[channelId].length === 0) {
+      localMessages[channelId].push(buildSystemMessage(`Welcome to #${channelId}, ${username}!`));
+    }
+  }
+
   function switchChannel(ch, e) {
-    chatHistory[currentChannel] = chatlog.innerHTML;
     currentChannel = ch;
     localStorage.setItem('ares_channel', ch);
     document.querySelectorAll('.channel-item').forEach(item => {
@@ -421,45 +520,336 @@
       e.currentTarget.classList.add('active');
     }
     channelTitle.textContent = '#' + ch;
-    chatlog.innerHTML = chatHistory[ch] || `<div class="message system"><span class="message-text">Joined #${ch}</span></div>`;
+    if (isLiveChannel(ch)) {
+      connectLiveChannel();
+    } else {
+      ensureLocalChannelMessages(ch);
+    }
+    renderCurrentChannel();
+    updateComposerState();
     input.focus();
   }
 
-  function timestamp() {
-    const d = new Date();
+  function timestamp(sentAt) {
+    const d = sentAt ? new Date(sentAt) : new Date();
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
-  function addMessage(user, text, isUpdate = false) {
+  function createMessageElement(message) {
     const msg = document.createElement('div');
-    msg.className = isUpdate ? 'message update' : 'message';
-    msg.innerHTML = `<span class="message-time">${timestamp()}</span><span class="message-user">${user}</span><div class="message-text">${text}</div>`;
-    chatlog.appendChild(msg);
+    msg.className = `message${message.type === 'system' ? ' system' : ''}${message.type === 'update' ? ' update' : ''}`;
+
+    const time = document.createElement('span');
+    time.className = 'message-time';
+    time.textContent = timestamp(message.sentAt);
+    msg.appendChild(time);
+
+    if (message.user) {
+      const user = document.createElement('span');
+      user.className = 'message-user';
+      user.textContent = message.user;
+      msg.appendChild(user);
+    }
+
+    const text = document.createElement('div');
+    text.className = 'message-text';
+    text.textContent = message.text;
+    msg.appendChild(text);
+
+    return msg;
+  }
+
+  function appendMessage(message) {
+    chatlog.appendChild(createMessageElement(message));
     chatlog.scrollTop = chatlog.scrollHeight;
+  }
+
+  function renderLiveEmptyState() {
+    const relayUrl = getLiveChannelUrl();
+    appendMessage(buildSystemMessage(
+      relayUrl
+        ? `#${LIVE_CHANNEL_ID} is a real shared channel. Relay: ${relayUrl}`
+        : `#${LIVE_CHANNEL_ID} is a real shared channel. Configure a relay URL in Settings to connect.`
+    ));
+
+    if (liveStatusState !== 'connected') {
+      appendMessage(buildSystemMessage('Live relay is offline or still connecting. Local-only channels remain available.', 'update'));
+    }
+  }
+
+  function renderCurrentChannel() {
+    chatlog.innerHTML = '';
+
+    if (isLiveChannel(currentChannel)) {
+      if (liveMessages.length === 0) {
+        renderLiveEmptyState();
+        return;
+      }
+
+      liveMessages.forEach(appendMessage);
+      return;
+    }
+
+    ensureLocalChannelMessages(currentChannel);
+    localMessages[currentChannel].forEach(appendMessage);
+  }
+
+  function addLocalMessage(channelId, message) {
+    ensureLocalChannelMessages(channelId);
+    localMessages[channelId].push(message);
+
+    if (currentChannel === channelId) {
+      appendMessage(message);
+    }
+  }
+
+  function getLiveChannelUrl() {
+    return liveServerUrlOverride || (liveChannelConfig && liveChannelConfig.url) || '';
+  }
+
+  function normalizeLiveServerUrl(value) {
+    if (!value) return '';
+
+    const parsed = new URL(value);
+    if (parsed.protocol !== 'ws:' && parsed.protocol !== 'wss:') {
+      throw new Error('Live channel URL must use ws:// or wss://');
+    }
+
+    return parsed.toString();
+  }
+
+  function setLiveStatus(state) {
+    liveStatusState = state;
+    liveStatus.dataset.state = state;
+
+    if (state === 'connected') {
+      liveStatus.textContent = '#ares-live connected';
+    } else if (state === 'connecting') {
+      liveStatus.textContent = '#ares-live connecting...';
+    } else {
+      liveStatus.textContent = '#ares-live offline';
+    }
+  }
+
+  function updateComposerState() {
+    const onLiveChannel = isLiveChannel(currentChannel);
+    const liveConnected = liveSocket && liveSocket.readyState === WebSocket.OPEN;
+    sendBtn.disabled = onLiveChannel && !liveConnected;
+    input.placeholder = onLiveChannel
+      ? (liveConnected ? 'Send a live message to #ares-live...' : 'Connecting to the live Ares channel...')
+      : 'Say something...';
+  }
+
+  function normalizeLiveMessages(messages) {
+    return (messages || []).map((message) => ({
+      type: 'message',
+      user: String(message.user || 'Guest').slice(0, 20),
+      text: String(message.text || '').slice(0, 500),
+      sentAt: message.sentAt || new Date().toISOString()
+    })).filter((message) => message.text.trim());
+  }
+
+  function scheduleLiveReconnect() {
+    if (liveReconnectTimer) {
+      clearTimeout(liveReconnectTimer);
+    }
+
+    liveReconnectTimer = setTimeout(() => {
+      liveReconnectTimer = null;
+      connectLiveChannel();
+    }, 2000);
+  }
+
+  function handleLiveSocketMessage(event) {
+    let payload;
+
+    try {
+      payload = JSON.parse(event.data);
+    } catch (error) {
+      return;
+    }
+
+    if (payload.type === 'history') {
+      liveMessages = normalizeLiveMessages(payload.messages);
+      if (currentChannel === LIVE_CHANNEL_ID) {
+        renderCurrentChannel();
+      }
+      return;
+    }
+
+    if (payload.type === 'message' && payload.message) {
+      const [message] = normalizeLiveMessages([payload.message]);
+      if (!message) return;
+
+      liveMessages.push(message);
+      if (liveMessages.length > 100) {
+        liveMessages.shift();
+      }
+
+      if (currentChannel === LIVE_CHANNEL_ID) {
+        appendMessage(message);
+      }
+    }
+  }
+
+  function connectLiveChannel() {
+    const url = getLiveChannelUrl();
+
+    if (!url) {
+      if (liveSocket) {
+        liveSocket.close();
+        liveSocket = null;
+      }
+      liveSocketUrl = '';
+      setLiveStatus('offline');
+      updateComposerState();
+      if (currentChannel === LIVE_CHANNEL_ID) {
+        renderCurrentChannel();
+      }
+      return;
+    }
+
+    if (liveSocket && liveSocketUrl === url && (liveSocket.readyState === WebSocket.OPEN || liveSocket.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+
+    if (liveReconnectTimer) {
+      clearTimeout(liveReconnectTimer);
+      liveReconnectTimer = null;
+    }
+
+    if (liveSocket) {
+      liveSocket.close();
+    }
+
+    liveSocketUrl = url;
+    setLiveStatus('connecting');
+    updateComposerState();
+
+    let socket;
+
+    try {
+      socket = new WebSocket(url);
+    } catch (error) {
+      liveSocket = null;
+      liveSocketUrl = '';
+      setLiveStatus('offline');
+      updateComposerState();
+      if (currentChannel === LIVE_CHANNEL_ID) {
+        renderCurrentChannel();
+      }
+      return;
+    }
+
+    liveSocket = socket;
+
+    socket.addEventListener('open', () => {
+      if (liveSocket !== socket) return;
+      setLiveStatus('connected');
+      updateComposerState();
+      if (currentChannel === LIVE_CHANNEL_ID && liveMessages.length === 0) {
+        renderCurrentChannel();
+      }
+    });
+
+    socket.addEventListener('message', handleLiveSocketMessage);
+
+    socket.addEventListener('close', () => {
+      if (liveSocket !== socket) return;
+      liveSocket = null;
+      setLiveStatus('offline');
+      updateComposerState();
+      if (currentChannel === LIVE_CHANNEL_ID && liveMessages.length === 0) {
+        renderCurrentChannel();
+      }
+      scheduleLiveReconnect();
+    });
+
+    socket.addEventListener('error', () => {
+      if (liveSocket !== socket) return;
+      setLiveStatus('offline');
+      updateComposerState();
+    });
   }
 
   function handleSend() {
     const text = input.value.trim();
     if (!text) return;
-    addMessage(username, text);
+
+    if (isLiveChannel(currentChannel)) {
+      if (!liveSocket || liveSocket.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      liveSocket.send(JSON.stringify({
+        type: 'message',
+        channel: LIVE_CHANNEL_ID,
+        user: username,
+        text
+      }));
+    } else {
+      addLocalMessage(currentChannel, {
+        type: 'message',
+        user: username,
+        text,
+        sentAt: new Date().toISOString()
+      });
+    }
+
     input.value = '';
     input.focus();
   }
 
   settingsBtn.addEventListener('click', () => {
     usernameInput.value = username;
+    liveServerUrlInput.value = liveServerUrlOverride;
     settingsModal.classList.add('show');
     usernameInput.focus();
   });
 
   saveBtn.addEventListener('click', () => {
     const newUsername = usernameInput.value.trim();
-    if (newUsername) {
+    let newLiveServerUrl = liveServerUrlInput.value.trim();
+
+    if (newUsername && newUsername !== username) {
+      const previousUsername = username;
       username = newUsername;
       localStorage.setItem('ares_username', username);
       usernameDisplay.textContent = username;
-      addMessage('System', `${username} changed their username`);
+      const targetChannel = currentChannel;
+      const usernameMessage = buildSystemMessage(`${previousUsername} is now known as ${username}`, 'update');
+
+      if (isLiveChannel(targetChannel)) {
+        liveMessages.push(usernameMessage);
+        if (currentChannel === targetChannel) {
+          appendMessage(usernameMessage);
+        }
+      } else {
+        addLocalMessage(targetChannel, usernameMessage);
+      }
     }
+
+    try {
+      newLiveServerUrl = normalizeLiveServerUrl(newLiveServerUrl);
+    } catch (error) {
+      liveServerUrlInput.focus();
+      return;
+    }
+
+    if (newLiveServerUrl !== liveServerUrlOverride) {
+      liveServerUrlOverride = newLiveServerUrl;
+      if (liveServerUrlOverride) {
+        localStorage.setItem('ares_live_server_url', liveServerUrlOverride);
+      } else {
+        localStorage.removeItem('ares_live_server_url');
+      }
+      liveMessages = [];
+      connectLiveChannel();
+      if (currentChannel === LIVE_CHANNEL_ID) {
+        renderCurrentChannel();
+      }
+    }
+
     settingsModal.classList.remove('show');
   });
 
@@ -476,12 +866,27 @@
     if (e.key === 'Enter') handleSend();
   });
 
-  channelTitle.textContent = '#' + currentChannel;
-  if (chatHistory[currentChannel]) {
-    chatlog.innerHTML = chatHistory[currentChannel];
-  } else {
-    addMessage('System', `Welcome to #${currentChannel}, ${username}!`);
+  if (window.aresNet && window.aresNet.getLiveChannelConfig) {
+    window.aresNet.getLiveChannelConfig()
+      .then((config) => {
+        liveChannelConfig = config;
+        connectLiveChannel();
+        if (currentChannel === LIVE_CHANNEL_ID) {
+          renderCurrentChannel();
+        }
+      })
+      .catch(() => {
+        setLiveStatus('offline');
+        updateComposerState();
+      });
   }
+
+  channelTitle.textContent = '#' + currentChannel;
+  if (!isLiveChannel(currentChannel)) {
+    ensureLocalChannelMessages(currentChannel);
+  }
+  renderCurrentChannel();
+  updateComposerState();
   input.focus();
 </script>
 
