@@ -1,4 +1,4 @@
-# Ares Chat v1.1.0
+# Ares Chat v1.1.1
 
 ## What's New
 
@@ -20,7 +20,7 @@
 ## Installation
 
 Download the latest Windows installer:
-- **Ares.Chat.Setup.1.1.0.exe** - Windows 10/11
+- **Ares.Chat.Setup.1.1.1.exe** - Windows 10/11
 
 Or build from source:
 ```bash
