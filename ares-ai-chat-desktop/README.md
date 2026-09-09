@@ -1,14 +1,12 @@
-# Ares AI Chat (desktop)
+# Ares Chat (desktop)
 
 A retro Ares Galaxy-style chatroom window, running as a real desktop app
-(Electron), with an LLM-powered chat participant called AI_Helper, plus an
-experimental network panel for probing real Ares Galaxy supernodes.
+(Electron), plus an experimental network panel for probing real Ares Galaxy
+supernodes.
 
 ## Requirements
 
 - [Node.js](https://nodejs.org) 18 or newer (includes npm)
-- An Anthropic API key from https://console.anthropic.com for the AI_Helper
-  chat participant (not needed for the network probe panel)
 
 ## Run it in development
 
@@ -17,8 +15,6 @@ cd ares-ai-chat-desktop
 npm install
 npm start
 ```
-
-Enter your API key in Settings when prompted to enable AI_Helper.
 
 ## Build a real installer (.exe / .app / .AppImage)
 
@@ -32,8 +28,6 @@ The latest Windows installer is available from GitHub Releases:
 - https://github.com/AranaJones/Ares-Chat/releases
 
 ## What's real vs. simulated
-
-**AI_Helper chat**: fully real - talks to the actual Anthropic API.
 
 **"Network (supernodes)" panel**: this is a genuine, working implementation
 of the *first* step the real Ares Galaxy client does - a plain TCP connect
@@ -66,8 +60,6 @@ against `MSG_CLIENT_LOGIN_REQ` / `MSG_SUPERNODE_FIRST_LOG` in
 
 ## Notes
 
-- The Anthropic API key is stored in the app's local storage on your
-  machine only.
 - Conversation history resets each time you restart the app.
 
 ## Project structure
