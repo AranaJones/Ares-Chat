@@ -20,6 +20,13 @@ npm start
 
 Enter your API key in Settings when prompted to enable AI_Helper.
 
+You can also start the app with a room target:
+
+```bash
+npm start -- --room ai-chat
+npm start -- --hashurl "arlnk://chatroom:203.0.113.10:5090|MyRoom"
+```
+
 ## Build a real installer (.exe / .app / .AppImage)
 
 ```bash
@@ -29,6 +36,10 @@ npm run dist
 ## What's real vs. simulated
 
 **AI_Helper chat**: fully real - talks to the actual Anthropic API.
+
+**Hashurl room targeting**: supported for the plain `arlnk://chatroom:host:port|room`
+form. The app will switch its local UI to that room target and show the
+hashurl endpoint details.
 
 **"Network (supernodes)" panel**: this is a genuine, working implementation
 of the *first* step the real Ares Galaxy client does - a plain TCP connect
@@ -54,6 +65,12 @@ sequence and which key negotiates it. Building that blind would produce
 code that looks complete but silently fails - so it's left undone rather
 than faked.
 
+That means:
+- A hashurl target changes the selected room in the desktop UI, but does not
+  claim to have joined the live Ares room
+- Live Ares channel discovery/listing is intentionally not implemented yet
+  because a verified room-list protocol path is still missing
+
 If you want to push this further: capturing a real login handshake with
 Wireshark against a live supernode (if any still exist) and comparing it
 against `MSG_CLIENT_LOGIN_REQ` / `MSG_SUPERNODE_FIRST_LOG` in
@@ -68,11 +85,12 @@ against `MSG_CLIENT_LOGIN_REQ` / `MSG_SUPERNODE_FIRST_LOG` in
 ## Project structure
 
 - `main.js` - Electron main process (window, IPC handlers for TCP probing
-  and loading SNodes.dat)
-- `preload.js` - exposes `window.aresNet` (probe/load) to the renderer
+  and loading SNodes.dat, plus room-target launch/deep-link handling)
+- `preload.js` - exposes `window.aresNet` (probe/load/room target/channel
+  status) to the renderer
 - `ares-crypto.js` - the d64 XOR stream cipher, with the discrepancy in the
   paper's worked example surfaced via `verifyD64()` rather than hidden
-- `ares-nodes.js` - parses SNodes.dat text format and the binary node
-  candidate wire format
+- `ares-nodes.js` - parses SNodes.dat text format, binary node candidate
+  wire format, and plain chatroom hashurl targets
 - `index.html` - the UI and chat/network logic
 - `package.json` - dependencies and build config

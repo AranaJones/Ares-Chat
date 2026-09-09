@@ -111,7 +111,7 @@
   .typing { color: #888; font-style: italic; }
 
   .userlist {
-    width: 150px;
+    width: 190px;
     background: #fff;
     border: 1px inset #999;
     margin: 6px 6px 6px 0;
@@ -137,6 +137,13 @@
     background: #3fbf3f;
     flex-shrink: 0;
   }
+  .sidebar-box {
+    padding: 4px 6px;
+    border-bottom: 1px solid #f0f0e8;
+    line-height: 1.4;
+  }
+  .sidebar-line { margin: 0 0 3px 0; overflow-wrap: break-word; }
+  .sidebar-muted { color: #666; }
 
   .inputbar {
     display: flex;
@@ -214,7 +221,7 @@
 
 <div class="window">
   <div class="titlebar">
-    <div class="left"><span class="icon"></span> Ares Galaxy - #ai-chat</div>
+    <div class="left"><span class="icon"></span> Ares Galaxy - <span id="titleRoom">#ai-chat</span></div>
   </div>
   <div class="menubar">
     <span>File</span><span>Search</span><span>Chat</span>
@@ -223,13 +230,17 @@
   </div>
   <div class="toolbar">
     <span class="status-dot" id="statusDot"></span> <span id="statusText">Checking connection...</span>
-    <span class="peer-count">| Room: #ai-chat | Peers online: 1,204</span>
+    <span class="peer-count" id="roomSummaryText">| Requested room: #ai-chat | Ares join: not implemented</span>
   </div>
 
   <div class="main">
     <div class="chatlog" id="chatlog"></div>
     <div class="userlist">
-      <div class="userlist-header">Users (2)</div>
+      <div class="userlist-header">Room target</div>
+      <div class="sidebar-box" id="roomTargetBox"></div>
+      <div class="userlist-header">Ares channels</div>
+      <div class="sidebar-box" id="channelDirectoryBox"></div>
+      <div class="userlist-header" id="userListHeader">Users (2)</div>
       <div class="userlist-item"><span class="dot"></span>You</div>
       <div class="userlist-item"><span class="dot"></span>AI_Helper</div>
     </div>
@@ -239,7 +250,7 @@
     <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off" />
     <button id="sendBtn">Send</button>
   </div>
-  <div class="statusbar">AI_Helper is an LLM-powered chat participant, running via the Anthropic API</div>
+  <div class="statusbar">AI_Helper is an LLM-powered chat participant. Ares hashurl room targeting is supported locally; real Ares room joins and live channel discovery are not.</div>
 </div>
 
 <div class="modal-overlay" id="settingsOverlay">
@@ -286,21 +297,89 @@
   const sendBtn = document.getElementById('sendBtn');
   const statusDot = document.getElementById('statusDot');
   const statusText = document.getElementById('statusText');
+  const titleRoom = document.getElementById('titleRoom');
+  const roomSummaryText = document.getElementById('roomSummaryText');
+  const roomTargetBox = document.getElementById('roomTargetBox');
+  const channelDirectoryBox = document.getElementById('channelDirectoryBox');
   const settingsOverlay = document.getElementById('settingsOverlay');
   const apiKeyInput = document.getElementById('apiKeyInput');
 
   const STORAGE_KEY = 'ares_ai_chat_api_key';
-  const history = [];
+  const roomHistories = new Map();
   const SYSTEM_PROMPT = "You are AI_Helper, a friendly and helpful participant in an old-school P2P chatroom (styled after Ares Galaxy). Keep replies conversational and reasonably concise, like a real chatroom message rather than a formal document. You are a generic helpful assistant - answer questions, help with tasks, and chat naturally.";
+  const DEFAULT_ROOM_TARGET = { roomName: '#ai-chat', source: 'default', host: '', port: null };
+  let currentRoom = null;
+  let channelDirectory = {
+    status: 'unavailable',
+    source: 'none',
+    rooms: [],
+    message: 'Live Ares channel discovery is unavailable in this build.'
+  };
 
   function getApiKey() {
     return localStorage.getItem(STORAGE_KEY) || '';
   }
 
+  function normalizeRoomName(name) {
+    const collapsed = String(name || '').trim().replace(/\s+/g, ' ');
+    const safe = collapsed || DEFAULT_ROOM_TARGET.roomName;
+    return safe.startsWith('#') ? safe : '#' + safe;
+  }
+
+  function normalizeRoomTarget(target) {
+    return {
+      roomName: normalizeRoomName(target && target.roomName),
+      source: (target && target.source) || DEFAULT_ROOM_TARGET.source,
+      host: (target && target.host) || '',
+      port: Number.isInteger(target && target.port) ? target.port : null,
+      original: (target && target.original) || ''
+    };
+  }
+
+  function readRoomTargetFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const roomName = params.get('roomName');
+    if (!roomName) return null;
+    const port = parseInt(params.get('port') || '', 10);
+    return normalizeRoomTarget({
+      roomName,
+      host: params.get('host') || '',
+      port: Number.isInteger(port) ? port : null,
+      source: params.get('source') || 'query'
+    });
+  }
+
+  function getRoomKey(target) {
+    return [
+      target.roomName,
+      target.host || '',
+      target.port || ''
+    ].join('|');
+  }
+
+  function getRoomHistory(target = currentRoom) {
+    const key = getRoomKey(target);
+    if (!roomHistories.has(key)) roomHistories.set(key, []);
+    return roomHistories.get(key);
+  }
+
+  function formatRoomEndpoint(target = currentRoom) {
+    return target.host && target.port ? target.host + ':' + target.port : 'not provided';
+  }
+
+  function formatRoomSource(target = currentRoom) {
+    const source = target.source || 'default';
+    if (source === 'hashurl') return 'Hashurl';
+    if (source === 'argv') return 'Startup argument';
+    if (source === 'open-url') return 'External hashurl';
+    if (source === 'default') return 'Default room';
+    return source;
+  }
+
   function refreshStatus() {
     if (getApiKey()) {
       statusDot.classList.remove('off');
-      statusText.textContent = 'Connected to network';
+      statusText.textContent = 'AI_Helper ready';
     } else {
       statusDot.classList.add('off');
       statusText.textContent = 'No API key set - click Settings';
@@ -340,9 +419,60 @@
     );
   }
 
-  addSystemLine('You have joined #ai-chat');
-  addSystemLine('AI_Helper has joined the room');
-  addUserLine('AI_Helper', "hey, welcome to the room. ask me anything and I'll help out. (set your API key in Settings if you haven't yet)", true);
+  function renderRoomChrome() {
+    titleRoom.textContent = currentRoom.roomName;
+    roomSummaryText.textContent =
+      '| Requested room: ' + currentRoom.roomName +
+      ' | Ares join: not implemented';
+  }
+
+  function renderRoomTargetBox() {
+    roomTargetBox.innerHTML =
+      '<div class="sidebar-line"><b>Room:</b> ' + escapeHtml(currentRoom.roomName) + '</div>' +
+      '<div class="sidebar-line"><b>Source:</b> ' + escapeHtml(formatRoomSource()) + '</div>' +
+      '<div class="sidebar-line"><b>Endpoint:</b> ' + escapeHtml(formatRoomEndpoint()) + '</div>' +
+      '<div class="sidebar-line sidebar-muted">This selects the room locally. It does not perform a verified Ares network join.</div>';
+  }
+
+  function renderChannelDirectory() {
+    const rooms = Array.isArray(channelDirectory.rooms) ? channelDirectory.rooms : [];
+    if (channelDirectory.status !== 'ready' || rooms.length === 0) {
+      channelDirectoryBox.innerHTML =
+        '<div class="sidebar-line"><b>Status:</b> ' + escapeHtml(channelDirectory.status || 'unavailable') + '</div>' +
+        '<div class="sidebar-line sidebar-muted">' + escapeHtml(channelDirectory.message || 'No directory data available.') + '</div>';
+      return;
+    }
+
+    channelDirectoryBox.innerHTML =
+      '<div class="sidebar-line"><b>Source:</b> ' + escapeHtml(channelDirectory.source || 'unknown') + '</div>' +
+      rooms.map((room) =>
+        '<div class="sidebar-line">' + escapeHtml(room.roomName || room.name || '') + '</div>'
+      ).join('');
+  }
+
+  function resetRoomTranscript(reason) {
+    chatlog.innerHTML = '';
+    const sourceLabel = formatRoomSource();
+    addSystemLine('Selected room: ' + currentRoom.roomName + ' (' + sourceLabel + ')');
+    if (reason) addSystemLine(reason);
+    if (currentRoom.host && currentRoom.port) {
+      addSystemLine('Hashurl target endpoint: ' + currentRoom.host + ':' + currentRoom.port);
+    }
+    addSystemLine('Real Ares room joins and live channel discovery are not implemented in this build.');
+    addUserLine('AI_Helper', 'hey, welcome to ' + currentRoom.roomName + ". i can chat locally here, but i'm not joined to the real Ares room.", true);
+  }
+
+  function applyRoomTarget(target, reason) {
+    const normalized = normalizeRoomTarget(target);
+    const changed = !currentRoom || getRoomKey(currentRoom) !== getRoomKey(normalized) || currentRoom.source !== normalized.source;
+    currentRoom = normalized;
+    renderRoomChrome();
+    renderRoomTargetBox();
+    if (changed) {
+      getRoomHistory(currentRoom);
+      resetRoomTranscript(reason);
+    }
+  }
 
   async function callClaude(userText) {
     const apiKey = getApiKey();
@@ -350,6 +480,7 @@
       throw new Error('no API key set - open Settings');
     }
 
+    const history = getRoomHistory();
     history.push({ role: 'user', content: userText });
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -439,10 +570,48 @@
     settingsOverlay.classList.remove('show');
   });
 
+  async function refreshChannelDirectory() {
+    if (!window.aresNet || !window.aresNet.getChannelDirectory) {
+      channelDirectory = {
+        status: 'unavailable',
+        source: 'bridge',
+        rooms: [],
+        message: 'Channel directory bridge is not available.'
+      };
+      renderChannelDirectory();
+      return;
+    }
+
+    try {
+      channelDirectory = await window.aresNet.getChannelDirectory();
+    } catch (err) {
+      channelDirectory = {
+        status: 'error',
+        source: 'ipc',
+        rooms: [],
+        message: 'Failed to load channel directory: ' + err.message
+      };
+    }
+    renderChannelDirectory();
+  }
+
   refreshStatus();
   if (!getApiKey()) {
     setTimeout(() => settingsOverlay.classList.add('show'), 300);
   }
+
+  applyRoomTarget(readRoomTargetFromQuery() || DEFAULT_ROOM_TARGET, 'Waiting for a verified Ares network join.');
+  if (window.aresNet && window.aresNet.onRoomTarget) {
+    window.aresNet.onRoomTarget((target) => {
+      applyRoomTarget(target, 'Updated from a new launch target.');
+    });
+  }
+  if (window.aresNet && window.aresNet.getLaunchRoomTarget) {
+    window.aresNet.getLaunchRoomTarget().then((target) => {
+      if (target) applyRoomTarget(target, 'Loaded from startup room target.');
+    }).catch(() => {});
+  }
+  refreshChannelDirectory();
 
   // --- Network / supernode probe panel ---
   const networkOverlay = document.getElementById('networkOverlay');

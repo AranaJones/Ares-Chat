@@ -63,4 +63,56 @@ function encodeBinaryCandidate(host, port) {
   return buf;
 }
 
-module.exports = { parseSNodesText, parseBinaryCandidates, encodeBinaryCandidate };
+function normalizeRoomName(name) {
+  const collapsed = String(name || '').trim().replace(/\s+/g, ' ');
+  const safe = collapsed || 'ai-chat';
+  return safe.startsWith('#') ? safe : '#' + safe;
+}
+
+function isValidRoomHost(host) {
+  return typeof host === 'string' && /^[A-Za-z0-9.-]+$/.test(host);
+}
+
+function isValidRoomPort(port) {
+  return Number.isInteger(port) && port > 0 && port <= 65535;
+}
+
+function parseRoomTarget(input) {
+  if (typeof input !== 'string') return null;
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  const withoutScheme = trimmed.replace(/^arlnk:\/\//i, '');
+  const lower = withoutScheme.toLowerCase();
+  if (!lower.startsWith('chatroom:')) return null;
+
+  const payload = withoutScheme.slice('chatroom:'.length);
+  const separatorIndex = payload.indexOf('|');
+  if (separatorIndex === -1) return null;
+
+  const endpoint = payload.slice(0, separatorIndex).trim();
+  const rawRoomName = payload.slice(separatorIndex + 1).trim();
+  const portSeparatorIndex = endpoint.lastIndexOf(':');
+  if (portSeparatorIndex === -1) return null;
+
+  const host = endpoint.slice(0, portSeparatorIndex).trim();
+  const port = parseInt(endpoint.slice(portSeparatorIndex + 1).trim(), 10);
+  if (!isValidRoomHost(host) || !isValidRoomPort(port) || !rawRoomName) return null;
+
+  return {
+    kind: 'chatroom',
+    source: 'hashurl',
+    host,
+    port,
+    roomName: normalizeRoomName(rawRoomName),
+    original: trimmed
+  };
+}
+
+module.exports = {
+  parseSNodesText,
+  parseBinaryCandidates,
+  encodeBinaryCandidate,
+  normalizeRoomName,
+  parseRoomTarget
+};

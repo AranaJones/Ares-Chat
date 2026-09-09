@@ -16,6 +16,12 @@
     "appId": "com.example.aresaichat",
     "productName": "Ares AI Chat",
     "directories": { "output": "dist" },
+    "protocols": [
+      {
+        "name": "Ares Hashurl",
+        "schemes": ["arlnk"]
+      }
+    ],
     "files": ["main.js", "preload.js", "index.html", "ares-crypto.js", "ares-nodes.js"],
     "mac": { "category": "public.app-category.social-networking" },
     "win": { "target": "nsis" },
