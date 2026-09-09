@@ -2,571 +2,258 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Ares Galaxy - Chatroom</title>
+<title>Ares Chat</title>
 <style>
   * { box-sizing: border-box; }
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    background: #4a5d7a;
-    font-family: Tahoma, "Segoe UI", Arial, sans-serif;
-    font-size: 12px;
-  }
   body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
+    margin: 0;
+    padding: 10px;
+    height: 100vh;
+    background: #f0f0f0;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
   }
 
-  .window {
-    width: 100%;
-    max-width: 900px;
+  .container {
+    display: flex;
     height: 100%;
-    max-height: 580px;
-    background: #ECE9D8;
-    border: 2px solid #0A246A;
-    border-radius: 6px;
-    box-shadow: 3px 3px 10px rgba(0,0,0,0.4);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .titlebar {
-    background: linear-gradient(180deg, #2A5CD8 0%, #0A246A 100%);
-    color: #fff;
-    padding: 5px 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-weight: bold;
-    font-size: 13px;
-    flex-shrink: 0;
-    -webkit-app-region: drag;
-  }
-  .titlebar .left { display: flex; align-items: center; gap: 6px; }
-  .titlebar .icon {
-    width: 14px; height: 14px; background: #FFCC00; border-radius: 2px;
-    display: inline-block;
-  }
-
-  .menubar {
-    background: #ECE9D8;
-    border-bottom: 1px solid #ACA899;
-    padding: 3px 8px;
-    font-size: 11px;
-    color: #333;
-    flex-shrink: 0;
-  }
-  .menubar span { margin-right: 14px; cursor: default; }
-  .menubar span.link { color: #0A246A; text-decoration: underline; cursor: pointer; }
-
-  .toolbar {
-    background: #ECE9D8;
-    border-bottom: 1px solid #ACA899;
-    padding: 4px 8px;
-    font-size: 11px;
-    color: #444;
-    display: flex;
-    align-items: center;
     gap: 10px;
-    flex-shrink: 0;
   }
-  .status-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #3fbf3f;
-    display: inline-block;
-    box-shadow: 0 0 3px #3fbf3f;
+
+  .sidebar {
+    width: 150px;
+    background: #2c3e50;
+    color: white;
+    border-radius: 5px;
+    overflow-y: auto;
+    padding: 10px 0;
   }
-  .status-dot.off { background: #bf3f3f; box-shadow: 0 0 3px #bf3f3f; }
-  .peer-count { color: #555; }
+
+  .sidebar-header {
+    padding: 10px;
+    font-weight: bold;
+    border-bottom: 1px solid #34495e;
+    margin-bottom: 5px;
+  }
+
+  .channel-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .channel-item:hover {
+    background: #34495e;
+  }
+
+  .channel-item.active {
+    background: #3498db;
+    border-left-color: #fff;
+    font-weight: bold;
+  }
 
   .main {
-    display: flex;
     flex: 1;
-    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   }
 
-  .channellist {
-    width: 140px;
-    background: #ECE9D8;
-    border-right: 1px solid #ACA899;
-    border-bottom: 1px solid #ACA899;
-    overflow-y: auto;
-    font-size: 11px;
-    flex-shrink: 0;
+  .header {
+    background: #2c3e50;
+    color: white;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
   }
-  .channellist-header {
-    background: #D8D4C4;
-    padding: 4px 6px;
-    font-weight: bold;
-    border-bottom: 1px solid #ACA899;
-    font-size: 10px;
-    color: #333;
-  }
-  .channel-item {
-    padding: 5px 8px;
-    border-bottom: 1px solid #f0f0e8;
-    cursor: pointer;
-    color: #0A246A;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .channel-item:hover {
-    background: #ddd9cd;
-  }
-  .channel-item.active {
-    background: #fff;
-    font-weight: bold;
-    border-left: 3px solid #0A246A;
-    padding-left: 5px;
+
+  .header h2 {
+    margin: 0;
+    font-size: 16px;
   }
 
   .chatlog {
     flex: 1;
-    background: #fff;
-    border: 1px inset #999;
-    margin: 6px 6px 6px 0;
-    padding: 6px 8px;
     overflow-y: auto;
-    font-family: "Courier New", monospace;
-    font-size: 12px;
-    line-height: 1.5;
+    padding: 15px;
+    background: #fafafa;
   }
 
-  .line { margin: 0 0 2px 0; overflow-wrap: break-word; }
-  .ts { color: #888; }
-  .sys { color: #b30000; font-style: italic; }
-  .name-user { color: #0000CC; font-weight: bold; }
-  .name-bot { color: #007A33; font-weight: bold; }
-  .msg-user { color: #111; }
-  .msg-bot { color: #111; white-space: pre-wrap; }
-  .typing { color: #888; font-style: italic; }
-
-  .userlist {
-    width: 140px;
-    background: #fff;
-    border: 1px inset #999;
-    margin: 6px 6px 6px 0;
-    overflow-y: auto;
-    font-size: 11px;
-    flex-shrink: 0;
+  .message {
+    margin-bottom: 8px;
+    padding: 8px 10px;
+    border-radius: 3px;
+    background: white;
+    border-left: 3px solid #3498db;
   }
-  .userlist-header {
-    background: #D8D4C4;
-    padding: 3px 6px;
+
+  .message.system {
+    border-left-color: #95a5a6;
+    color: #7f8c8d;
+    font-style: italic;
+    background: #ecf0f1;
+  }
+
+  .message-user {
     font-weight: bold;
-    border-bottom: 1px solid #ACA899;
+    color: #2c3e50;
   }
-  .userlist-item {
-    padding: 3px 6px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    border-bottom: 1px solid #f0f0e8;
+
+  .message-time {
+    font-size: 12px;
+    color: #95a5a6;
+    margin-right: 8px;
   }
-  .userlist-item .dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: #3fbf3f;
-    flex-shrink: 0;
+
+  .message-text {
+    color: #333;
+    word-wrap: break-word;
   }
 
   .inputbar {
     display: flex;
-    padding: 6px;
-    gap: 6px;
-    background: #ECE9D8;
-    border-top: 1px solid #ACA899;
-    flex-shrink: 0;
+    gap: 8px;
+    padding: 12px;
+    background: white;
+    border-top: 1px solid #ddd;
   }
-  .inputbar input[type=text] {
+
+  .inputbar input {
     flex: 1;
-    padding: 5px 6px;
-    border: 1px inset #999;
-    font-family: Tahoma, Arial, sans-serif;
-    font-size: 12px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
   }
+
+  .inputbar input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 3px rgba(52, 152, 219, 0.3);
+  }
+
   .inputbar button {
-    padding: 5px 16px;
-    background: #ECE9D8;
-    border: 1px outset #ACA899;
-    font-size: 11px;
+    padding: 8px 20px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 3px;
     cursor: pointer;
-  }
-  .inputbar button:active { border-style: inset; }
-  .inputbar button:disabled { color: #999; cursor: default; }
-
-  .statusbar {
-    background: #ECE9D8;
-    border-top: 1px solid #ACA899;
-    padding: 3px 8px;
-    font-size: 10px;
-    color: #555;
-    flex-shrink: 0;
+    font-weight: bold;
+    transition: background 0.2s;
   }
 
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.4);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
+  .inputbar button:hover {
+    background: #2980b9;
   }
-  .modal-overlay.show { display: flex; }
-  .modal {
-    width: 380px;
-    background: #ECE9D8;
-    border: 2px solid #0A246A;
-    border-radius: 6px;
-    box-shadow: 3px 3px 10px rgba(0,0,0,0.4);
+
+  .inputbar button:active {
+    background: #1f618d;
   }
-  .modal .titlebar { border-radius: 4px 4px 0 0; }
-  .modal-body { padding: 14px; font-size: 12px; color: #222; }
-  .modal-body p { margin: 0 0 10px 0; line-height: 1.5; }
-  .modal-body input[type=text] {
-    width: 100%;
-    padding: 6px;
-    border: 1px inset #999;
-    font-family: "Courier New", monospace;
-    font-size: 12px;
-    margin-bottom: 10px;
-  }
-  .modal-actions { display: flex; justify-content: flex-end; gap: 6px; }
-  .modal-actions button {
-    padding: 5px 16px;
-    background: #ECE9D8;
-    border: 1px outset #ACA899;
-    font-size: 11px;
-    cursor: pointer;
-  }
-  .modal-actions button:active { border-style: inset; }
 </style>
 </head>
 <body>
 
-<div class="window">
-  <div class="titlebar">
-    <div class="left"><span class="icon"></span> Ares Galaxy - <span id="currentChannel">#general</span></div>
-  </div>
-  <div class="menubar">
-    <span>File</span><span>Search</span><span>Chat</span>
-    <span class="link" id="openSettings">Settings</span>
-    <span class="link" id="openNetwork">Network</span><span>Help</span>
-  </div>
-
-  <div class="toolbar">
-    <span class="status-dot" id="statusDot"></span> <span id="statusText">Ready</span>
-    <span class="peer-count" id="peerInfo">| Peers online: 2,150</span>
+<div class="container">
+  <div class="sidebar">
+    <div class="sidebar-header">Channels</div>
+    <div id="channelList"></div>
   </div>
 
   <div class="main">
-    <div class="channellist">
-      <div class="channellist-header">CHANNELS</div>
-      <div id="channellistContainer"></div>
+    <div class="header">
+      <h2 id="channelTitle">#general</h2>
     </div>
     <div class="chatlog" id="chatlog"></div>
-    <div class="userlist">
-      <div class="userlist-header">Users (12)</div>
-      <div class="userlist-item"><span class="dot"></span>You</div>
-      <div class="userlist-item"><span class="dot"></span>Nexus_42</div>
-      <div class="userlist-item"><span class="dot"></span>Phoenix_Sky</div>
-      <div class="userlist-item"><span class="dot"></span>CodeMaster</div>
-      <div class="userlist-item"><span class="dot"></span>Luna_Echo</div>
-      <div class="userlist-item"><span class="dot"></span>Vortex</div>
-      <div class="userlist-item"><span class="dot"></span>NovaX</div>
-      <div class="userlist-item"><span class="dot"></span>Echo</div>
-      <div class="userlist-item"><span class="dot"></span>ZenMind</div>
-      <div class="userlist-item"><span class="dot"></span>Cipher</div>
-      <div class="userlist-item"><span class="dot"></span>Raven</div>
-    </div>
-  </div>
-
-  <div class="inputbar">
-    <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off" />
-    <button id="sendBtn">Send</button>
-  </div>
-  <div class="statusbar">Connected to Ares Galaxy Network</div>
-</div>
-
-<div class="modal-overlay" id="settingsOverlay">
-  <div class="modal">
-    <div class="titlebar"><div class="left"><span class="icon"></span> Settings</div></div>
-    <div class="modal-body">
-      <p>User Settings for Ares Galaxy Chat</p>
-      <input type="text" id="usernameInput" placeholder="Username" autocomplete="off" spellcheck="false" />
-      <div class="modal-actions">
-        <button id="saveSettingsBtn">Save</button>
-        <button id="cancelSettingsBtn">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="networkOverlay">
-  <div class="modal" style="width:520px;">
-    <div class="titlebar"><div class="left"><span class="icon"></span> Network - supernode probe</div></div>
-    <div class="modal-body">
-      <p>This does a plain TCP connect check against Ares supernode IPs - the
-      same first step the real client does before login. It does <b>not</b>
-      log in or fetch chat rooms (that part of the protocol isn't confirmed
-      yet). Paste <code>host:port</code> pairs (one per line) or load a real
-      <code>SNodes.dat</code> from an existing Ares Galaxy install.</p>
-      <textarea id="nodeInput" rows="5" style="width:100%; font-family:'Courier New',monospace; font-size:11px; border:1px inset #999; padding:4px;" placeholder="203.0.113.10:2091&#10;203.0.113.1[...]"></textarea>
-      <div class="modal-actions" style="justify-content:flex-start; margin-top:8px;">
-        <button id="loadSNodesBtn">Load SNodes.dat...</button>
-        <button id="probeAllBtn">Probe all</button>
-      </div>
-      <div id="probeResults" style="margin-top:10px; max-height:220px; overflow-y:auto; font-family:'Courier New',monospace; font-size:11px; background:#fff; border:1px inset #999; padding:4px;"></div>
-      <div class="modal-actions" style="margin-top:10px;">
-        <button id="closeNetworkBtn">Close</button>
-      </div>
+    <div class="inputbar">
+      <input type="text" id="msgInput" placeholder="Say something..." autocomplete="off" />
+      <button id="sendBtn">Send</button>
     </div>
   </div>
 </div>
 
 <script>
+  const channels = ['general', 'off-topic', 'gaming', 'music', 'tech', 'random'];
   const chatlog = document.getElementById('chatlog');
   const input = document.getElementById('msgInput');
   const sendBtn = document.getElementById('sendBtn');
-  const statusDot = document.getElementById('statusDot');
-  const statusText = document.getElementById('statusText');
-  const settingsOverlay = document.getElementById('settingsOverlay');
-  const usernameInput = document.getElementById('usernameInput');
-  const channellistContainer = document.getElementById('channellistContainer');
-  const currentChannelDisplay = document.getElementById('currentChannel');
-  const peerInfo = document.getElementById('peerInfo');
+  const channelTitle = document.getElementById('channelTitle');
+  const channelList = document.getElementById('channelList');
 
-  // Public channels (no AI channels)
-  const PUBLIC_CHANNELS = [
-    { name: 'general', peers: 2150 },
-    { name: 'off-topic', peers: 1890 },
-    { name: 'tech-talk', peers: 1340 },
-    { name: 'gaming', peers: 980 },
-    { name: 'music', peers: 756 },
-    { name: 'movies', peers: 654 },
-    { name: 'books', peers: 432 },
-    { name: 'politics', peers: 1205 },
-    { name: 'sports', peers: 1876 },
-    { name: 'random', peers: 2310 }
-  ];
+  let currentChannel = localStorage.getItem('ares_channel') || 'general';
+  let chatHistory = {};
 
-  const CURRENT_CHANNEL_KEY = 'ares_current_channel';
-  let currentChannel = localStorage.getItem(CURRENT_CHANNEL_KEY) || 'general';
-  let channelHistory = {}; // Store chat history per channel
-  const history = [];
-
-  function initializeChannels() {
-    channellistContainer.innerHTML = '';
-    PUBLIC_CHANNELS.forEach(channel => {
-      const item = document.createElement('div');
-      item.className = `channel-item ${channel.name === currentChannel ? 'active' : ''}`;
-      item.textContent = `#${channel.name}`;
-      item.addEventListener('click', () => switchChannel(channel.name));
-      channellistContainer.appendChild(item);
-    });
-    updateChannelDisplay();
-  }
-
-  function switchChannel(channelName) {
-    if (currentChannel === channelName) return;
+  // Initialize channels
+  channels.forEach(ch => {
+    const item = document.createElement('div');
+    item.className = `channel-item ${ch === currentChannel ? 'active' : ''}`;
+    item.textContent = '#' + ch;
+    item.onclick = () => switchChannel(ch);
+    channelList.appendChild(item);
     
-    // Save current channel's history
-    if (!channelHistory[currentChannel]) {
-      channelHistory[currentChannel] = [];
+    if (!chatHistory[ch]) {
+      chatHistory[ch] = [];
     }
-    channelHistory[currentChannel] = [...history];
+  });
+
+  function switchChannel(ch) {
+    // Save current channel
+    chatHistory[currentChannel] = chatlog.innerHTML;
     
-    // Clear history array
-    history.length = 0;
-    
-    // Switch to new channel
-    currentChannel = channelName;
-    localStorage.setItem(CURRENT_CHANNEL_KEY, currentChannel);
-    
-    // Load new channel's history
-    if (channelHistory[currentChannel]) {
-      history.push(...channelHistory[currentChannel]);
-    }
+    // Switch channel
+    currentChannel = ch;
+    localStorage.setItem('ares_channel', ch);
     
     // Update UI
-    updateChannelDisplay();
-    chatlog.innerHTML = '';
-    renderChannelHistory();
-    
-    // Re-render channel list
     document.querySelectorAll('.channel-item').forEach(item => {
       item.classList.remove('active');
-      if (item.textContent === `#${currentChannel}`) {
-        item.classList.add('active');
-      }
     });
-  }
-
-  function updateChannelDisplay() {
-    currentChannelDisplay.textContent = `#${currentChannel}`;
-    const channel = PUBLIC_CHANNELS.find(c => c.name === currentChannel);
-    if (channel) {
-      peerInfo.textContent = `| Peers online: ${channel.peers.toLocaleString()}`;
-    }
-  }
-
-  function renderChannelHistory() {
-    if (history.length === 0) {
-      addSystemLine(`You have joined #${currentChannel}`);
-    } else {
-      // Render existing history
-      history.forEach(msg => {
-        if (msg.role === 'user') {
-          addUserLine('You', msg.content, false);
-        } else if (msg.role === 'assistant') {
-          addUserLine('System', msg.content, true);
-        }
-      });
-    }
+    event.target.classList.add('active');
+    
+    channelTitle.textContent = '#' + ch;
+    chatlog.innerHTML = chatHistory[ch] || `<div class="message system"><span class="message-text">Joined #${ch}</span></div>`;
+    input.focus();
   }
 
   function timestamp() {
     const d = new Date();
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
-  function appendLine(html) {
-    const div = document.createElement('div');
-    div.className = 'line';
-    div.innerHTML = html;
-    chatlog.appendChild(div);
+  function addMessage(username, text) {
+    const msg = document.createElement('div');
+    msg.className = 'message';
+    msg.innerHTML = `<span class="message-time">${timestamp()}</span><span class="message-user">${username}</span><div class="message-text">${text}</div>`;
+    chatlog.appendChild(msg);
     chatlog.scrollTop = chatlog.scrollHeight;
-    return div;
   }
 
-  function escapeHtml(str) {
-    const d = document.createElement('div');
-    d.textContent = str;
-    return d.innerHTML;
-  }
-
-  function addSystemLine(text) {
-    appendLine('<span class="ts">[' + timestamp() + ']</span> <span class="sys">* ' + escapeHtml(text) + '</span>');
-  }
-
-  function addUserLine(name, text, isBot) {
-    const nameClass = isBot ? 'name-bot' : 'name-user';
-    return appendLine(
-      '<span class="ts">[' + timestamp() + ']</span> ' +
-      '<span class="' + nameClass + '">&lt;' + escapeHtml(name) + '&gt;</span> ' +
-      '<span class="msg-' + (isBot ? 'bot' : 'user') + '">' + escapeHtml(text) + '</span>'
-    );
-  }
-
-  let sending = false;
-
-  async function handleSend() {
+  function handleSend() {
     const text = input.value.trim();
-    if (!text || sending) return;
-
-    sending = true;
-    sendBtn.disabled = true;
+    if (!text) return;
+    
+    addMessage('You', text);
     input.value = '';
-
-    addUserLine('You', text, false);
-    history.push({ role: 'user', content: text });
+    input.focus();
   }
 
   sendBtn.addEventListener('click', handleSend);
-  input.addEventListener('keydown', (e) => {
+  input.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleSend();
   });
 
-  document.getElementById('openSettings').addEventListener('click', () => {
-    settingsOverlay.classList.add('show');
-  });
-  document.getElementById('cancelSettingsBtn').addEventListener('click', () => {
-    settingsOverlay.classList.remove('show');
-  });
-  document.getElementById('saveSettingsBtn').addEventListener('click', () => {
-    settingsOverlay.classList.remove('show');
-  });
-
-  statusDot.classList.remove('off');
-  statusText.textContent = 'Connected to network';
-  initializeChannels();
-  renderChannelHistory();
-
-  // --- Network / supernode probe panel ---
-  const networkOverlay = document.getElementById('networkOverlay');
-  const nodeInput = document.getElementById('nodeInput');
-  const probeResults = document.getElementById('probeResults');
-
-  document.getElementById('openNetwork').addEventListener('click', () => {
-    networkOverlay.classList.add('show');
-  });
-  document.getElementById('closeNetworkBtn').addEventListener('click', () => {
-    networkOverlay.classList.remove('show');
-  });
-
-  document.getElementById('loadSNodesBtn').addEventListener('click', async () => {
-    if (!window.aresNet) return;
-    const result = await window.aresNet.loadSNodesFile();
-    if (!result) return;
-    const lines = result.nodes.map(n => n.host + ':' + n.port);
-    nodeInput.value = lines.join('\n');
-    addSystemLine('Loaded ' + result.nodes.length + ' nodes from ' + result.filePath);
-  });
-
-  function parseNodeInput() {
-    return nodeInput.value
-      .split(/\r?\n/)
-      .map(l => l.trim())
-      .filter(l => l.length > 0)
-      .map(l => {
-        const [host, portStr] = l.split(':');
-        return { host, port: parseInt(portStr, 10) };
-      })
-      .filter(n => n.host && n.port);
+  // Initialize
+  channelTitle.textContent = '#' + currentChannel;
+  if (chatHistory[currentChannel]) {
+    chatlog.innerHTML = chatHistory[currentChannel];
+  } else {
+    addMessage('System', `Welcome to #${currentChannel}!`);
   }
-
-  document.getElementById('probeAllBtn').addEventListener('click', async () => {
-    const nodes = parseNodeInput();
-    if (nodes.length === 0) {
-      probeResults.innerHTML = '<div>No nodes to probe. Paste host:port lines or load SNodes.dat.</div>';
-      return;
-    }
-    if (!window.aresNet) {
-      probeResults.innerHTML = '<div>Network bridge not available.</div>';
-      return;
-    }
-    probeResults.innerHTML = '<div>Probing ' + nodes.length + ' node(s)...</div>';
-
-    const results = [];
-    const concurrency = 20;
-    let idx = 0;
-    async function worker() {
-      while (idx < nodes.length) {
-        const node = nodes[idx++];
-        const r = await window.aresNet.probeNode(node.host, node.port);
-        results.push(r);
-        render();
-      }
-    }
-    function render() {
-      const sorted = [...results].sort((a, b) => {
-        if (a.alive !== b.alive) return a.alive ? -1 : 1;
-        return (a.ms || 0) - (b.ms || 0);
-      });
-      probeResults.innerHTML = sorted.map(r =>
-        '<div>' + (r.alive ? '<span style="color:#007A33;">ALIVE</span>' : '<span style="color:#b30000;">dead</span>') +
-        ' ' + escapeHtml(r.host) + ':' + r.port +
-        (r.alive ? ' (' + r.ms + 'ms)' : ' (' + escapeHtml(r.error || '') + ')') +
-        '</div>'
-      ).join('') + '<div style="margin-top:4px;color:#888;">' + results.length + '/' + nodes.length + ' checked</div>';
-    }
-    const workers = Array.from({ length: Math.min(concurrency, nodes.length) }, worker);
-    await Promise.all(workers);
-  });
+  input.focus();
 </script>
 
 </body>
