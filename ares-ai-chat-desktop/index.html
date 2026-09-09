@@ -1,498 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Ares Chat</title>
-<style>
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    padding: 10px;
-    height: 100vh;
-    background: #f0f0f0;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-  }
-
-  .container {
-    display: flex;
-    height: 100%;
-    gap: 10px;
-  }
-
-  .sidebar {
-    width: 150px;
-    background: #2c3e50;
-    color: white;
-    border-radius: 5px;
-    overflow-y: auto;
-    padding: 10px 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .sidebar-header {
-    padding: 10px;
-    font-weight: bold;
-    border-bottom: 1px solid #34495e;
-    margin-bottom: 5px;
-  }
-
-  .channel-item {
-    padding: 8px 12px;
-    cursor: pointer;
-    border-left: 3px solid transparent;
-    transition: all 0.2s;
-  }
-
-  .channel-item:hover {
-    background: #34495e;
-  }
-
-  .channel-item.active {
-    background: #3498db;
-    border-left-color: #fff;
-    font-weight: bold;
-  }
-
-  #channelList {
-    flex: 1;
-    overflow-y: auto;
-  }
-
-  .sidebar-footer {
-    padding: 10px;
-    border-top: 1px solid #34495e;
-    margin-top: auto;
-  }
-
-  .settings-btn {
-    width: 100%;
-    padding: 8px;
-    background: #34495e;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: bold;
-    transition: background 0.2s;
-  }
-
-  .settings-btn:hover {
-    background: #2c3e50;
-  }
-
-  .main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: white;
-    border-radius: 5px;
-    overflow: hidden;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  }
-
-  .header {
-    background: #2c3e50;
-    color: white;
-    padding: 15px;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .header h2 {
-    margin: 0;
-    font-size: 16px;
-  }
-
-  .header .username {
-    font-size: 12px;
-    color: #bdc3c7;
-  }
-
-  .chatlog {
-    flex: 1;
-    overflow-y: auto;
-    padding: 15px;
-    background: #fafafa;
-  }
-
-  .message {
-    margin-bottom: 8px;
-    padding: 8px 10px;
-    border-radius: 3px;
-    background: white;
-    border-left: 3px solid #3498db;
-  }
-
-  .message.system {
-    border-left-color: #95a5a6;
-    color: #7f8c8d;
-    font-style: italic;
-    background: #ecf0f1;
-  }
-
-  .message.update {
-    border-left-color: #27ae60;
-    color: #27ae60;
-    background: #d5f4e6;
-    font-weight: bold;
-  }
-
-  .message-user {
-    font-weight: bold;
-    color: #2c3e50;
-  }
-
-  .message-time {
-    font-size: 12px;
-    color: #95a5a6;
-    margin-right: 8px;
-  }
-
-  .message-text {
-    color: #333;
-    word-wrap: break-word;
-  }
-
-  .message.update .message-text {
-    color: inherit;
-  }
-
-  .inputbar {
-    display: flex;
-    gap: 8px;
-    padding: 12px;
-    background: white;
-    border-top: 1px solid #ddd;
-  }
-
-  .inputbar input {
-    flex: 1;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    font-size: 14px;
-    font-family: Arial, sans-serif;
-  }
-
-  .inputbar input:focus {
-    outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 3px rgba(52, 152, 219, 0.3);
-  }
-
-  .inputbar button {
-    padding: 8px 20px;
-    background: #3498db;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.2s;
-  }
-
-  .inputbar button:hover {
-    background: #2980b9;
-  }
-
-  .inputbar button:active {
-    background: #1f618d;
-  }
-
-  /* Modal Styles */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-
-  .modal-overlay.show {
-    display: flex;
-  }
-
-  .modal {
-    background: white;
-    border-radius: 5px;
-    padding: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    max-width: 400px;
-    width: 90%;
-  }
-
-  .modal h3 {
-    margin-top: 0;
-    color: #2c3e50;
-  }
-
-  .modal-field {
-    margin-bottom: 15px;
-  }
-
-  .modal-field label {
-    display: block;
-    margin-bottom: 5px;
-    color: #2c3e50;
-    font-weight: bold;
-    font-size: 12px;
-  }
-
-  .modal-field input {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    font-size: 14px;
-    font-family: Arial, sans-serif;
-    margin-bottom: 5px;
-  }
-
-  .modal-field input:focus {
-    outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 3px rgba(52, 152, 219, 0.3);
-  }
-
-  .modal-field .info-link {
-    font-size: 11px;
-    color: #3498db;
-  }
-
-  .modal-field .info-link a {
-    color: #3498db;
-    text-decoration: none;
-  }
-
-  .modal-field .info-link a:hover {
-    text-decoration: underline;
-  }
-
-  .modal-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-  }
-
-  .modal-actions button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.2s;
-  }
-
-  .modal-actions .save {
-    background: #3498db;
-    color: white;
-  }
-
-  .modal-actions .save:hover {
-    background: #2980b9;
-  }
-
-  .modal-actions .cancel {
-    background: #ecf0f1;
-    color: #2c3e50;
-  }
-
-  .modal-actions .cancel:hover {
-    background: #ddd;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ares Chat</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <main class="app-shell">
+    <section class="chat-card" aria-label="Ares chat application">
+      <header class="chat-header">
+        <div>
+          <p class="eyebrow">Ares Assistant</p>
+          <h1>Ares Chat</h1>
+          <p class="subtitle">A browser-ready conversation demo with local history.</p>
+        </div>
 
-<div class="container">
-  <div class="sidebar">
-    <div class="sidebar-header">Channels</div>
-    <div id="channelList"></div>
-    <div class="sidebar-footer">
-      <button class="settings-btn" id="settingsBtn">⚙️ Settings</button>
-    </div>
-  </div>
+        <div class="header-actions">
+          <button type="button" class="secondary-btn" id="profileBtn">Profile</button>
+          <button type="button" class="danger-btn" id="resetBtn">Clear chat</button>
+        </div>
+      </header>
 
-  <div class="main">
-    <div class="header">
-      <h2 id="channelTitle">#general</h2>
-      <div class="username" id="usernameDisplay">Guest</div>
-    </div>
-    <div class="chatlog" id="chatlog"></div>
-    <div class="inputbar">
-      <input type="text" id="msgInput" placeholder="Say something..." autocomplete="off" />
-      <button id="sendBtn">Send</button>
-    </div>
-  </div>
-</div>
+      <section class="chat-meta" aria-label="Conversation details">
+        <div class="participant participant-user">
+          <div class="avatar" id="userAvatar" aria-hidden="true">Y</div>
+          <div>
+            <strong id="userNameDisplay">You</strong>
+            <p>Messages are saved on this device.</p>
+          </div>
+        </div>
+        <div class="participant participant-ai">
+          <div class="avatar ai-avatar" aria-hidden="true">AI</div>
+          <div>
+            <strong>Ares</strong>
+            <p id="conversationStatus">Ready to help.</p>
+          </div>
+        </div>
+      </section>
 
-<!-- Settings Modal -->
-<div class="modal-overlay" id="settingsModal">
-  <div class="modal">
-    <h3>Settings</h3>
-    <div class="modal-field">
-      <label for="usernameInput">Username:</label>
-      <input type="text" id="usernameInput" placeholder="Enter your username" maxlength="20" />
-    </div>
-    <div class="modal-field">
-      <label>Releases & Updates:</label>
-      <div class="info-link">
-        <a href="https://github.com/AranaJones/Ares-AI/releases/tag/Ares" target="_blank">📦 Download Latest Release</a>
+      <section class="chat-history" id="chatHistory" aria-live="polite" aria-label="Conversation history"></section>
+
+      <form class="composer" id="chatForm">
+        <label class="sr-only" for="messageInput">Message</label>
+        <textarea
+          id="messageInput"
+          rows="1"
+          maxlength="1000"
+          placeholder="Type your message to Ares..."
+        ></textarea>
+        <div class="composer-actions">
+          <p class="helper-text">Press Enter to send, Shift + Enter for a new line.</p>
+          <button type="submit" class="primary-btn" id="sendBtn">Send</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <dialog class="profile-dialog" id="profileDialog">
+    <form method="dialog" class="dialog-content" id="profileForm">
+      <div class="dialog-header">
+        <h2>Edit profile</h2>
+        <button type="button" class="icon-btn" id="closeProfileBtn" aria-label="Close profile dialog">×</button>
       </div>
-    </div>
-    <div class="modal-actions">
-      <button class="save" id="saveBtn">Save</button>
-      <button class="cancel" id="cancelBtn">Cancel</button>
-    </div>
-  </div>
-</div>
 
-<script>
-  const channels = ['general', 'off-topic', 'gaming', 'music', 'tech', 'random'];
-  const chatlog = document.getElementById('chatlog');
-  const input = document.getElementById('msgInput');
-  const sendBtn = document.getElementById('sendBtn');
-  const channelTitle = document.getElementById('channelTitle');
-  const channelList = document.getElementById('channelList');
-  const usernameDisplay = document.getElementById('usernameDisplay');
-  const settingsBtn = document.getElementById('settingsBtn');
-  const settingsModal = document.getElementById('settingsModal');
-  const usernameInput = document.getElementById('usernameInput');
-  const saveBtn = document.getElementById('saveBtn');
-  const cancelBtn = document.getElementById('cancelBtn');
+      <label class="dialog-label" for="userNameInput">Display name</label>
+      <input id="userNameInput" name="name" type="text" maxlength="24" placeholder="Enter your name" />
 
-  let currentChannel = localStorage.getItem('ares_channel') || 'general';
-  let username = localStorage.getItem('ares_username') || 'Guest';
-  let chatHistory = {};
-  let lastCommitHash = localStorage.getItem('ares_last_commit') || '';
+      <label class="dialog-label" for="userAvatarInput">Avatar text</label>
+      <input id="userAvatarInput" name="avatar" type="text" maxlength="2" placeholder="e.g. AJ" />
 
-  // Initialize channels
-  channels.forEach(ch => {
-    const item = document.createElement('div');
-    item.className = `channel-item ${ch === currentChannel ? 'active' : ''}`;
-    item.textContent = '#' + ch;
-    item.onclick = () => switchChannel(ch);
-    channelList.appendChild(item);
-    
-    if (!chatHistory[ch]) {
-      chatHistory[ch] = [];
-    }
-  });
+      <p class="dialog-note">These details are stored locally in your browser.</p>
 
-  // Update username display
-  usernameDisplay.textContent = username;
+      <div class="dialog-actions">
+        <button type="button" class="secondary-btn" id="cancelProfileBtn">Cancel</button>
+        <button type="submit" class="primary-btn">Save profile</button>
+      </div>
+    </form>
+  </dialog>
 
-  function switchChannel(ch) {
-    // Save current channel
-    chatHistory[currentChannel] = chatlog.innerHTML;
-    
-    // Switch channel
-    currentChannel = ch;
-    localStorage.setItem('ares_channel', ch);
-    
-    // Update UI
-    document.querySelectorAll('.channel-item').forEach(item => {
-      item.classList.remove('active');
-    });
-    event.target.classList.add('active');
-    
-    channelTitle.textContent = '#' + ch;
-    chatlog.innerHTML = chatHistory[ch] || `<div class="message system"><span class="message-text">Joined #${ch}</span></div>`;
-    input.focus();
-  }
+  <template id="messageTemplate">
+    <article class="message">
+      <div class="avatar message-avatar" aria-hidden="true"></div>
+      <div class="message-body">
+        <div class="message-topline">
+          <span class="message-author"></span>
+          <time class="message-time"></time>
+        </div>
+        <p class="message-text"></p>
+      </div>
+    </article>
+  </template>
 
-  function timestamp() {
-    const d = new Date();
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-
-  function addMessage(user, text, isUpdate = false) {
-    const msg = document.createElement('div');
-    msg.className = isUpdate ? 'message update' : 'message';
-    msg.innerHTML = `<span class="message-time">${timestamp()}</span><span class="message-user">${user}</span><div class="message-text">${text}</div>`;
-    chatlog.appendChild(msg);
-    chatlog.scrollTop = chatlog.scrollHeight;
-  }
-
-  function checkForUpdates() {
-    fetch('https://api.github.com/repos/AranaJones/Ares-AI/commits?per_page=1')
-      .then(r => r.json())
-      .then(data => {
-        if (data.length > 0) {
-          const latestCommit = data[0].sha;
-          if (lastCommitHash && latestCommit !== lastCommitHash) {
-            addMessage('System', `🔄 NEW VERSION AVAILABLE! Check GitHub for updates: https://github.com/AranaJones/Ares-AI/releases/tag/Ares`, true);
-          }
-          localStorage.setItem('ares_last_commit', latestCommit);
-          lastCommitHash = latestCommit;
-        }
-      })
-      .catch(err => console.log('Update check failed:', err));
-  }
-
-  function handleSend() {
-    const text = input.value.trim();
-    if (!text) return;
-    
-    addMessage(username, text);
-    input.value = '';
-    input.focus();
-  }
-
-  // Settings Modal Handlers
-  settingsBtn.addEventListener('click', () => {
-    usernameInput.value = username;
-    settingsModal.classList.add('show');
-    usernameInput.focus();
-  });
-
-  saveBtn.addEventListener('click', () => {
-    const newUsername = usernameInput.value.trim();
-    if (newUsername) {
-      username = newUsername;
-      localStorage.setItem('ares_username', username);
-      usernameDisplay.textContent = username;
-      addMessage('System', `${username} changed their username`);
-    }
-    settingsModal.classList.remove('show');
-  });
-
-  cancelBtn.addEventListener('click', () => {
-    settingsModal.classList.remove('show');
-  });
-
-  usernameInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') saveBtn.click();
-  });
-
-  sendBtn.addEventListener('click', handleSend);
-  input.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleSend();
-  });
-
-  // Initialize
-  channelTitle.textContent = '#' + currentChannel;
-  if (chatHistory[currentChannel]) {
-    chatlog.innerHTML = chatHistory[currentChannel];
-  } else {
-    addMessage('System', `Welcome to #${currentChannel}, ${username}!`);
-  }
-  input.focus();
-
-  // Check for updates every 5 minutes
-  checkForUpdates();
-  setInterval(checkForUpdates, 5 * 60 * 1000);
-</script>
-
+  <script src="app.js" defer></script>
 </body>
 </html>
