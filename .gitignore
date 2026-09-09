@@ -1,0 +1,3 @@
+windows-launcher/**/bin/
+windows-launcher/**/obj/
+windows-launcher/**/*.csproj.user
