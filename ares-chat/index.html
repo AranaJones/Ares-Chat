@@ -421,7 +421,20 @@
   function addMessage(user, text, isUpdate = false) {
     const msg = document.createElement('div');
     msg.className = isUpdate ? 'message update' : 'message';
-    msg.innerHTML = `<span class="message-time">${timestamp()}</span><span class="message-user">${user}</span><div class="message-text">${text}</div>`;
+
+    const timeEl = document.createElement('span');
+    timeEl.className = 'message-time';
+    timeEl.textContent = timestamp();
+
+    const userEl = document.createElement('span');
+    userEl.className = 'message-user';
+    userEl.textContent = user;
+
+    const textEl = document.createElement('div');
+    textEl.className = 'message-text';
+    textEl.textContent = text;
+
+    msg.append(timeEl, userEl, textEl);
     chatlog.appendChild(msg);
     chatlog.scrollTop = chatlog.scrollHeight;
   }
