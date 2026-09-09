@@ -1,4 +1,4 @@
-# Ares AI Chat (desktop)
+# Ares Chat (desktop)
 
 A retro Ares Galaxy-style chatroom window, running as a real desktop app
 (Electron), with an LLM-powered chat participant called AI_Helper, plus an
