@@ -1,8 +1,15 @@
 # Ares AI Chat (desktop)
 
 A retro Ares Galaxy-style chatroom window, running as a real desktop app
-(Electron), with an LLM-powered chat participant called AI_Helper, plus an
-experimental network panel for probing real Ares Galaxy supernodes.
+(Electron), with local simulated rooms plus a live Ares Galaxy room flow that
+can:
+
+- log into a real supernode using the official prelogin/login handshake
+- load real room targets from a community-maintained `rooms.json` feed or
+  plain `arlnk://chatroom:host:port|room` links
+- validate a room over the UDP room-list protocol
+- open a real room TCP session and read live topic, user-list, join/part, and
+  public chat traffic
 
 ## Requirements
 
@@ -35,49 +42,60 @@ The latest Windows installer is available from GitHub Releases:
 
 **AI_Helper chat**: fully real - talks to the actual Anthropic API.
 
-**"Network (supernodes)" panel**: this is a genuine, working implementation
-of the *first* step the real Ares Galaxy client does - a plain TCP connect
-check against a list of supernode IP:port pairs, to see which ones still
-answer. This part needed no unverified crypto and matches
-`tthread_check_supernode.connect()` in the real (GPL) Ares Galaxy source.
+**Supernode login**: the desktop app now implements the real Ares Galaxy
+prelogin/login handshake used by the official Delphi client for newer
+supernodes (`MSG_CLIENT_FIRST_LOG`, `MSG_CLIENT_LOGIN_REQ`, `d3a`, `e1/d1`).
+You can enter a `host:port` manually or load a real `SNodes.dat` and let the
+app try those candidates.
 
 You can:
-- Paste `host:port` pairs manually if you have any from another source
+- Enter a supernode `host:port` manually and click **Login node**
 - Load a real `SNodes.dat` file if you have an existing Ares Galaxy install
-  (Windows only, `%localappdata%\ares\Data\SNodes.dat` typically)
-- Click "Probe all" to see which ones respond
+  (Windows only, `%localappdata%\\ares\\Data\\SNodes.dat` typically)
+- Let the app try loaded supernode candidates with **Try loaded node list**
 
-**What's NOT implemented (and why)**: actually logging into a supernode and
-joining/reading a chat room. That requires the full client<->supernode
-handshake, which is encrypted with a keyed XOR stream cipher family
-(`d64`/`d67` in the original source). `ares-crypto.js` implements the `d64`
-variant as documented in a 2016 academic forensic paper on this exact
-network - but that paper itself never fully solved the live network
-handshake (only local file/registry encryption), and I could not locate the
-specific source file (`thread_client.pas`) that shows the exact handshake
-sequence and which key negotiates it. Building that blind would produce
-code that looks complete but silently fails - so it's left undone rather
-than faked.
+**Live room join**: the desktop app can now join a real Ares-compatible room
+target once you know its `host:port`:
 
-If you want to push this further: capturing a real login handshake with
-Wireshark against a live supernode (if any still exist) and comparing it
-against `MSG_CLIENT_LOGIN_REQ` / `MSG_SUPERNODE_FIRST_LOG` in
-`const_commands.pas` would be the way to actually finish it.
+- Load live rooms from the default AresFix `rooms.json` feed, or
+- Paste a plain `arlnk://chatroom:host:port|room` link (or `host:port|room`)
+
+When you click a live room, the app:
+
+1. optionally verifies a real supernode session first
+2. validates the room over the UDP room-list protocol (`SENDINFO`/`ACKINFO`)
+3. opens a room TCP socket
+4. sends a real room login packet
+5. renders live topic, roster, join/part, and public chat events in the UI
+
+**What is still intentionally limited**:
+
+- legacy `MSG_SERVER_PRELOGIN_OK` supernodes are still not implemented
+- room crypto/key exchange (`AdvancedFeatures` / `ServerCryptoKey`) is not yet
+  implemented, so the live room client currently uses plaintext room login
+- sending messages into a live room is still disabled until the client->room
+  public-message payload is verified against live traffic or additional source
+  references
 
 ## Notes
 
 - The Anthropic API key is stored in the app's local storage on your
   machine only.
 - Conversation history resets each time you restart the app.
+- The default live room feed URL is
+  `https://raw.githubusercontent.com/lexicon06/AresFix/main/rooms.json`.
 
 ## Project structure
 
-- `main.js` - Electron main process (window, IPC handlers for TCP probing
-  and loading SNodes.dat)
-- `preload.js` - exposes `window.aresNet` (probe/load) to the renderer
+- `main.js` - Electron main process (window, IPC handlers for supernode login,
+  live room validation, room join, and loading `SNodes.dat`)
+- `preload.js` - exposes `window.aresNet` APIs to the renderer
 - `ares-crypto.js` - the d64 XOR stream cipher, with the discrepancy in the
   paper's worked example surfaced via `verifyD64()` rather than hidden
+- `ares-supernode.js` - official supernode prelogin/login packet handling
+- `ares-chatrooms.js` - live room feed parsing and UDP room validation
+- `ares-room-client.js` - live room TCP login and inbound event parsing
 - `ares-nodes.js` - parses SNodes.dat text format and the binary node
   candidate wire format
-- `index.html` - the UI and chat/network logic
+- `index.html` - the local simulated chat UI plus the live Ares room controls
 - `package.json` - dependencies and build config

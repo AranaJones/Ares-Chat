@@ -21,21 +21,37 @@
   }
 
   .sidebar {
-    width: 150px;
+    width: 300px;
     background: #2c3e50;
     color: white;
     border-radius: 5px;
-    overflow-y: auto;
-    padding: 10px 0;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
   }
 
   .sidebar-header {
-    padding: 10px;
+    padding: 12px;
     font-weight: bold;
     border-bottom: 1px solid #34495e;
-    margin-bottom: 5px;
+  }
+
+  .sidebar-scroll {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .sidebar-section {
+    padding-bottom: 10px;
+    border-bottom: 1px solid #34495e;
+  }
+
+  .section-label {
+    padding: 10px 12px 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #bdc3c7;
   }
 
   .channel-item {
@@ -55,21 +71,50 @@
     font-weight: bold;
   }
 
-  #channelList {
-    flex: 1;
-    overflow-y: auto;
+  .channel-item small {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    color: #d6e7f5;
+    font-weight: normal;
+    word-break: break-word;
   }
 
-  .sidebar-footer {
-    padding: 10px;
-    border-top: 1px solid #34495e;
-    margin-top: auto;
+  .live-panel {
+    padding: 12px;
+    display: grid;
+    gap: 8px;
   }
 
+  .live-panel label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #bdc3c7;
+  }
+
+  .live-panel input {
+    width: 100%;
+    padding: 7px 8px;
+    border: 1px solid #4d6478;
+    border-radius: 3px;
+    background: #f8fbfd;
+    color: #2c3e50;
+    font-size: 12px;
+  }
+
+  .live-actions,
+  .footer-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .live-panel button,
   .settings-btn {
     width: 100%;
     padding: 8px;
-    background: #34495e;
+    background: #3498db;
     color: white;
     border: none;
     border-radius: 3px;
@@ -79,8 +124,38 @@
     transition: background 0.2s;
   }
 
+  .live-panel button:hover,
   .settings-btn:hover {
-    background: #2c3e50;
+    background: #2980b9;
+  }
+
+  .settings-btn.secondary,
+  .live-panel button.secondary {
+    background: #34495e;
+  }
+
+  .settings-btn.secondary:hover,
+  .live-panel button.secondary:hover {
+    background: #415b70;
+  }
+
+  .status-line {
+    min-height: 32px;
+    padding: 8px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.08);
+    font-size: 12px;
+    color: #ecf0f1;
+    line-height: 1.35;
+  }
+
+  .status-line.error {
+    background: rgba(192, 57, 43, 0.35);
+  }
+
+  .sidebar-footer {
+    padding: 10px 12px;
+    border-top: 1px solid #34495e;
   }
 
   .main {
@@ -112,6 +187,10 @@
     flex: 1 1 auto;
   }
 
+  .brand-copy {
+    min-width: 0;
+  }
+
   .brand-logo {
     width: clamp(22px, 2.2vw, 30px);
     height: clamp(22px, 2.2vw, 30px);
@@ -125,8 +204,17 @@
     margin: 0;
     font-size: clamp(15px, 1.4vw, 16px);
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.1;
     letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .channel-meta {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #bdc3c7;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -168,6 +256,11 @@
     font-weight: bold;
   }
 
+  .message.private {
+    border-left-color: #8e44ad;
+    background: #f4ecf7;
+  }
+
   .message-user {
     font-weight: bold;
     color: #2c3e50;
@@ -182,6 +275,7 @@
   .message-text {
     color: #333;
     word-wrap: break-word;
+    white-space: pre-wrap;
   }
 
   .message.update .message-text {
@@ -211,6 +305,12 @@
     box-shadow: 0 0 3px rgba(52, 152, 219, 0.3);
   }
 
+  .inputbar input:disabled,
+  .inputbar button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
   .inputbar button {
     padding: 8px 20px;
     background: #3498db;
@@ -222,11 +322,11 @@
     transition: background 0.2s;
   }
 
-  .inputbar button:hover {
+  .inputbar button:hover:not(:disabled) {
     background: #2980b9;
   }
 
-  .inputbar button:active {
+  .inputbar button:active:not(:disabled) {
     background: #1f618d;
   }
 
@@ -289,20 +389,6 @@
     box-shadow: 0 0 3px rgba(52, 152, 219, 0.3);
   }
 
-  .modal-field .info-link {
-    font-size: 11px;
-    color: #3498db;
-  }
-
-  .modal-field .info-link a {
-    color: #3498db;
-    text-decoration: none;
-  }
-
-  .modal-field .info-link a:hover {
-    text-decoration: underline;
-  }
-
   .modal-actions {
     display: flex;
     gap: 8px;
@@ -342,8 +428,37 @@
 <div class="container">
   <div class="sidebar">
     <div class="sidebar-header">Channels</div>
-    <div id="channelList"></div>
-    <div class="sidebar-footer">
+    <div class="sidebar-scroll">
+      <div class="sidebar-section">
+        <div class="section-label">Live Ares</div>
+        <div class="live-panel">
+          <label for="supernodeInput">Supernode host:port</label>
+          <input type="text" id="supernodeInput" placeholder="1.2.3.4:4661" />
+          <div class="live-actions">
+            <button id="connectSupernodeBtn">Login node</button>
+            <button id="loadSNodesBtn" class="secondary">Load SNodes</button>
+          </div>
+          <button id="tryLoadedNodeBtn" class="secondary">Try loaded node list</button>
+          <label for="roomFeedUrlInput">Live room feed</label>
+          <input type="text" id="roomFeedUrlInput" />
+          <button id="loadLiveRoomsBtn">Load live rooms</button>
+          <label for="roomLinkInput">Room target</label>
+          <input type="text" id="roomLinkInput" placeholder="arlnk://chatroom:host:port|room" />
+          <button id="addRoomLinkBtn" class="secondary">Add target</button>
+          <div class="status-line" id="liveStatus">Load a room feed or paste a room target to join a real Ares chatroom.</div>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="section-label">Live rooms</div>
+        <div id="liveChannelList"></div>
+      </div>
+      <div class="sidebar-section">
+        <div class="section-label">Simulated rooms</div>
+        <div id="simulatedChannelList"></div>
+      </div>
+    </div>
+    <div class="sidebar-footer footer-actions">
+      <button class="settings-btn secondary" id="disconnectLiveBtn">Leave live room</button>
       <button class="settings-btn" id="settingsBtn">⚙️ Settings</button>
     </div>
   </div>
@@ -352,7 +467,10 @@
     <div class="header">
       <div class="brand">
         <img src="assets/ares-logo.png" alt="Ares Galaxy logo" class="brand-logo" />
-        <h2 id="channelTitle">#general</h2>
+        <div class="brand-copy">
+          <h2 id="channelTitle">#general</h2>
+          <div class="channel-meta" id="channelMeta">Local simulated room</div>
+        </div>
       </div>
       <div class="username" id="usernameDisplay">Guest</div>
     </div>
@@ -379,50 +497,79 @@
 </div>
 
 <script>
-  const channels = ['general', 'off-topic', 'gaming', 'music', 'tech', 'random'];
+  const simulatedChannels = ['general', 'off-topic', 'gaming', 'music', 'tech', 'random'];
   const chatlog = document.getElementById('chatlog');
   const input = document.getElementById('msgInput');
   const sendBtn = document.getElementById('sendBtn');
   const channelTitle = document.getElementById('channelTitle');
-  const channelList = document.getElementById('channelList');
+  const channelMeta = document.getElementById('channelMeta');
+  const simulatedChannelList = document.getElementById('simulatedChannelList');
+  const liveChannelList = document.getElementById('liveChannelList');
   const usernameDisplay = document.getElementById('usernameDisplay');
   const settingsBtn = document.getElementById('settingsBtn');
+  const disconnectLiveBtn = document.getElementById('disconnectLiveBtn');
   const settingsModal = document.getElementById('settingsModal');
   const usernameInput = document.getElementById('usernameInput');
   const saveBtn = document.getElementById('saveBtn');
   const cancelBtn = document.getElementById('cancelBtn');
+  const liveStatus = document.getElementById('liveStatus');
+  const supernodeInput = document.getElementById('supernodeInput');
+  const connectSupernodeBtn = document.getElementById('connectSupernodeBtn');
+  const loadSNodesBtn = document.getElementById('loadSNodesBtn');
+  const tryLoadedNodeBtn = document.getElementById('tryLoadedNodeBtn');
+  const roomFeedUrlInput = document.getElementById('roomFeedUrlInput');
+  const loadLiveRoomsBtn = document.getElementById('loadLiveRoomsBtn');
+  const roomLinkInput = document.getElementById('roomLinkInput');
+  const addRoomLinkBtn = document.getElementById('addRoomLinkBtn');
 
-  let currentChannel = localStorage.getItem('ares_channel') || 'general';
   let username = localStorage.getItem('ares_username') || 'Guest';
-  let chatHistory = {};
+  let loadedNodes = [];
+  let liveChannels = [];
+  let liveUsers = {};
+  let currentChannel = parseStoredChannel();
+  let activeRoomKey = null;
+  let lastSupernodeSession = null;
+  const chatHistory = {};
 
-  channels.forEach(ch => {
-    const item = document.createElement('div');
-    item.className = `channel-item ${ch === currentChannel ? 'active' : ''}`;
-    item.textContent = '#' + ch;
-    item.onclick = (e) => switchChannel(ch, e);
-    channelList.appendChild(item);
-
-    if (!chatHistory[ch]) {
-      chatHistory[ch] = [];
-    }
-  });
-
+  roomFeedUrlInput.value = localStorage.getItem('ares_live_feed_url') || window.aresNet.defaults.liveChannelFeedUrl;
+  supernodeInput.value = localStorage.getItem('ares_supernode_target') || '';
   usernameDisplay.textContent = username;
 
-  function switchChannel(ch, e) {
-    chatHistory[currentChannel] = chatlog.innerHTML;
-    currentChannel = ch;
-    localStorage.setItem('ares_channel', ch);
-    document.querySelectorAll('.channel-item').forEach(item => {
-      item.classList.remove('active');
-    });
-    if (e && e.currentTarget) {
-      e.currentTarget.classList.add('active');
+  function channelKey(channel) {
+    if (channel.type === 'live') {
+      return `live:${channel.host}:${channel.port}|${channel.name}`;
     }
-    channelTitle.textContent = '#' + ch;
-    chatlog.innerHTML = chatHistory[ch] || `<div class="message system"><span class="message-text">Joined #${ch}</span></div>`;
-    input.focus();
+    return `sim:${channel.name}`;
+  }
+
+  function parseStoredChannel() {
+    try {
+      const raw = localStorage.getItem('ares_channel_state');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.type && parsed.name) {
+          return parsed;
+        }
+      }
+    } catch (error) {
+    }
+    return { type: 'simulated', name: localStorage.getItem('ares_channel') || 'general' };
+  }
+
+  function persistCurrentChannel() {
+    localStorage.setItem('ares_channel_state', JSON.stringify(currentChannel));
+    if (currentChannel.type === 'simulated') {
+      localStorage.setItem('ares_channel', currentChannel.name);
+    }
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function timestamp() {
@@ -430,18 +577,281 @@
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
-  function addMessage(user, text, isUpdate = false) {
-    const msg = document.createElement('div');
-    msg.className = isUpdate ? 'message update' : 'message';
-    msg.innerHTML = `<span class="message-time">${timestamp()}</span><span class="message-user">${user}</span><div class="message-text">${text}</div>`;
-    chatlog.appendChild(msg);
+  function messageHtml(user, text, type = 'default') {
+    const extra = type === 'default' ? '' : ' ' + type;
+    const userHtml = user ? `<span class="message-user">${escapeHtml(user)}</span>` : '';
+    return `<div class="message${extra}"><span class="message-time">${timestamp()}</span>${userHtml}<div class="message-text">${escapeHtml(text)}</div></div>`;
+  }
+
+  function ensureHistory(channel) {
+    const key = channelKey(channel);
+    if (!chatHistory[key]) {
+      chatHistory[key] = [];
+    }
+    return chatHistory[key];
+  }
+
+  function addHistory(channel, user, text, type = 'default') {
+    ensureHistory(channel).push(messageHtml(user, text, type));
+    if (channelKey(channel) === channelKey(currentChannel)) {
+      renderCurrentHistory();
+    }
+  }
+
+  function ensureWelcomeMessage(channel) {
+    const history = ensureHistory(channel);
+    if (history.length > 0) {
+      return;
+    }
+    if (channel.type === 'live') {
+      history.push(messageHtml('System', `Live target ready for #${channel.name} at ${channel.host}:${channel.port}. Join it from the sidebar to start the real room connection.`, 'system'));
+      return;
+    }
+    history.push(messageHtml('System', `Welcome to #${channel.name}, ${username}!`, 'system'));
+  }
+
+  function updateChannelMeta() {
+    if (currentChannel.type === 'live') {
+      const roster = liveUsers[channelKey(currentChannel)];
+      const rosterText = roster ? `${roster.size} user${roster.size === 1 ? '' : 's'} seen` : 'joining';
+      const supernodeText = currentChannel.supernode ? ` via supernode ${currentChannel.supernode.host}:${currentChannel.supernode.port}` : '';
+      const topicText = currentChannel.topic ? ` • ${currentChannel.topic}` : '';
+      channelMeta.textContent = `Live Ares room ${currentChannel.host}:${currentChannel.port} • ${rosterText}${supernodeText}${topicText}`;
+      return;
+    }
+    channelMeta.textContent = 'Local simulated room';
+  }
+
+  function renderCurrentHistory() {
+    ensureWelcomeMessage(currentChannel);
+    chatlog.innerHTML = ensureHistory(currentChannel).join('');
     chatlog.scrollTop = chatlog.scrollHeight;
+  }
+
+  function updateInputState() {
+    const isLive = currentChannel.type === 'live';
+    input.disabled = isLive;
+    sendBtn.disabled = isLive;
+    input.placeholder = isLive
+      ? 'Live room read-only: room login and inbound updates are real, sending is still disabled.'
+      : 'Say something...';
+  }
+
+  function setLiveStatus(text, isError = false) {
+    liveStatus.textContent = text;
+    liveStatus.classList.toggle('error', isError);
+  }
+
+  function upsertLiveChannel(channel) {
+    const key = channelKey({ type: 'live', host: channel.host, port: channel.port, name: channel.name });
+    const existingIndex = liveChannels.findIndex((entry) => channelKey(entry) === key);
+    const merged = {
+      type: 'live',
+      ...channel
+    };
+    if (existingIndex === -1) {
+      liveChannels.push(merged);
+    } else {
+      liveChannels[existingIndex] = { ...liveChannels[existingIndex], ...merged };
+    }
+    liveChannels.sort((left, right) => (right.users || 0) - (left.users || 0) || left.name.localeCompare(right.name));
+    renderChannelLists();
+    return liveChannels.find((entry) => channelKey(entry) === key);
+  }
+
+  function renderChannelLists() {
+    simulatedChannelList.innerHTML = '';
+    liveChannelList.innerHTML = '';
+
+    simulatedChannels.forEach((name) => {
+      const channel = { type: 'simulated', name };
+      const item = document.createElement('div');
+      item.className = `channel-item${channelKey(channel) === channelKey(currentChannel) ? ' active' : ''}`;
+      item.textContent = '#' + name;
+      item.onclick = () => switchChannel(channel);
+      simulatedChannelList.appendChild(item);
+      ensureHistory(channel);
+    });
+
+    if (liveChannels.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'channel-item';
+      empty.textContent = 'No live rooms loaded yet';
+      liveChannelList.appendChild(empty);
+    }
+
+    liveChannels.forEach((channel) => {
+      const item = document.createElement('div');
+      item.className = `channel-item${channelKey(channel) === channelKey(currentChannel) ? ' active' : ''}`;
+      item.innerHTML = `#${escapeHtml(channel.name)}<small>${escapeHtml(`${channel.host}:${channel.port}${channel.users ? ` • ${channel.users} users` : ''}`)}</small>`;
+      item.onclick = () => joinLiveChannel(channel);
+      liveChannelList.appendChild(item);
+      ensureHistory(channel);
+    });
+  }
+
+  function switchChannel(channel) {
+    currentChannel = { ...channel };
+    persistCurrentChannel();
+    channelTitle.textContent = '#' + channel.name;
+    updateChannelMeta();
+    updateInputState();
+    renderChannelLists();
+    renderCurrentHistory();
+    input.focus();
+  }
+
+  async function loginSupernode(target) {
+    const session = await window.aresNet.loginSupernode(target, username);
+    lastSupernodeSession = session;
+    localStorage.setItem('ares_supernode_target', `${session.host}:${session.port}`);
+    supernodeInput.value = `${session.host}:${session.port}`;
+    setLiveStatus(`Logged into supernode ${session.host}:${session.port} using the real Ares prelogin/login handshake.`);
+    return session;
+  }
+
+  async function ensureSupernodeIfPossible() {
+    if (lastSupernodeSession) {
+      return lastSupernodeSession;
+    }
+    const manualTarget = supernodeInput.value.trim();
+    if (manualTarget) {
+      return loginSupernode(manualTarget);
+    }
+    if (loadedNodes.length > 0) {
+      const session = await window.aresNet.loginAnySupernode(loadedNodes, username);
+      lastSupernodeSession = session;
+      supernodeInput.value = `${session.host}:${session.port}`;
+      localStorage.setItem('ares_supernode_target', `${session.host}:${session.port}`);
+      setLiveStatus(`Logged into supernode ${session.host}:${session.port} from the loaded SNodes list.`);
+      return session;
+    }
+    return null;
+  }
+
+  async function joinLiveChannel(channel) {
+    try {
+      setLiveStatus(`Joining live room #${channel.name}...`);
+      let supernodeNote = 'without a verified supernode';
+      try {
+        const session = await ensureSupernodeIfPossible();
+        if (session) {
+          supernodeNote = `via supernode ${session.host}:${session.port}`;
+        }
+      } catch (error) {
+        setLiveStatus(`Live room join will continue without supernode context: ${error.message}`);
+      }
+
+      const result = await window.aresNet.joinLiveChannel(channel, username);
+      activeRoomKey = result.roomKey;
+      const merged = upsertLiveChannel({
+        ...channel,
+        ...result.validated,
+        joined: true,
+        supernode: result.supernode || null
+      });
+      switchChannel(merged);
+      addHistory(merged, 'System', `Joined real Ares room #${merged.name} at ${merged.host}:${merged.port} ${supernodeNote}. Waiting for live room traffic...`, 'system');
+      if (merged.topic) {
+        addHistory(merged, 'System', `Topic: ${merged.topic}`, 'system');
+      }
+      setLiveStatus(`Live room #${merged.name} is connected.`);
+    } catch (error) {
+      setLiveStatus(error.message, true);
+    }
+  }
+
+  function handleLiveRoomEvent(event) {
+    const room = liveChannels.find((entry) => channelKey(entry).replace('live:', '') === event.roomKey);
+    const activeChannel = room || liveChannels.find((entry) => channelKey(entry).replace('live:', '') === activeRoomKey) || currentChannel;
+    const key = activeChannel.type === 'live' ? channelKey(activeChannel) : null;
+
+    if (event.type === 'status') {
+      setLiveStatus(event.text);
+      return;
+    }
+
+    if (event.type === 'error') {
+      setLiveStatus(event.message, true);
+      if (activeChannel.type === 'live') {
+        addHistory(activeChannel, 'System', event.message, 'system');
+      }
+      return;
+    }
+
+    if (!key) {
+      return;
+    }
+
+    liveUsers[key] = liveUsers[key] || new Set();
+
+    switch (event.type) {
+      case 'login-ack':
+        addHistory(activeChannel, 'System', 'Room login acknowledged by the chat server.', 'system');
+        break;
+      case 'topic': {
+        const updated = upsertLiveChannel({ ...activeChannel, topic: event.topic });
+        if (channelKey(currentChannel) === channelKey(updated)) {
+          currentChannel = updated;
+          updateChannelMeta();
+        }
+        addHistory(updated, 'System', `Topic: ${event.topic}`, 'system');
+        break;
+      }
+      case 'userlist-user':
+        liveUsers[key].add(event.name);
+        updateChannelMeta();
+        break;
+      case 'userlist-end': {
+        const updated = upsertLiveChannel({ ...activeChannel, users: liveUsers[key].size || event.userCount || activeChannel.users });
+        if (channelKey(currentChannel) === channelKey(updated)) {
+          currentChannel = updated;
+          updateChannelMeta();
+        }
+        addHistory(updated, 'System', `Loaded ${liveUsers[key].size} user${liveUsers[key].size === 1 ? '' : 's'} from the live room.`, 'system');
+        break;
+      }
+      case 'join':
+        liveUsers[key].add(event.name);
+        addHistory(activeChannel, 'System', `${event.name} joined the room.`, 'update');
+        updateChannelMeta();
+        break;
+      case 'part':
+        liveUsers[key].delete(event.name);
+        addHistory(activeChannel, 'System', `${event.name} left the room.`, 'system');
+        updateChannelMeta();
+        break;
+      case 'public':
+        addHistory(activeChannel, event.from, event.text);
+        break;
+      case 'emote':
+        addHistory(activeChannel, event.from, event.text, 'update');
+        break;
+      case 'private':
+        addHistory(activeChannel, event.from, event.text, 'private');
+        break;
+      case 'system':
+        addHistory(activeChannel, 'System', event.text, 'system');
+        break;
+      case 'redirect':
+        addHistory(activeChannel, 'System', `Server requested redirect to ${event.host}:${event.port} (${event.room}): ${event.message}`, 'system');
+        break;
+      case 'close':
+        activeRoomKey = null;
+        addHistory(activeChannel, 'System', 'Live room socket closed.', 'system');
+        setLiveStatus('Live room socket closed.');
+        break;
+      default:
+        break;
+    }
   }
 
   function handleSend() {
     const text = input.value.trim();
-    if (!text) return;
-    addMessage(username, text);
+    if (!text) {
+      return;
+    }
+    addHistory(currentChannel, username, text);
     input.value = '';
     input.focus();
   }
@@ -452,13 +862,87 @@
     usernameInput.focus();
   });
 
+  disconnectLiveBtn.addEventListener('click', async () => {
+    await window.aresNet.leaveLiveChannel();
+    activeRoomKey = null;
+    if (currentChannel.type === 'live') {
+      addHistory(currentChannel, 'System', 'Closed the active live room socket.', 'system');
+    }
+    setLiveStatus('Closed the active live room socket.');
+  });
+
+  connectSupernodeBtn.addEventListener('click', async () => {
+    try {
+      if (!supernodeInput.value.trim()) {
+        throw new Error('Enter a supernode host:port first.');
+      }
+      await loginSupernode(supernodeInput.value.trim());
+    } catch (error) {
+      setLiveStatus(error.message, true);
+    }
+  });
+
+  loadSNodesBtn.addEventListener('click', async () => {
+    try {
+      const result = await window.aresNet.loadSNodesFile();
+      if (!result) {
+        return;
+      }
+      loadedNodes = result.nodes;
+      setLiveStatus(`Loaded ${loadedNodes.length} supernode candidates from ${result.filePath}.`);
+    } catch (error) {
+      setLiveStatus(error.message, true);
+    }
+  });
+
+  tryLoadedNodeBtn.addEventListener('click', async () => {
+    try {
+      if (loadedNodes.length === 0) {
+        throw new Error('Load SNodes.dat first.');
+      }
+      const session = await window.aresNet.loginAnySupernode(loadedNodes, username);
+      lastSupernodeSession = session;
+      supernodeInput.value = `${session.host}:${session.port}`;
+      localStorage.setItem('ares_supernode_target', `${session.host}:${session.port}`);
+      setLiveStatus(`Logged into live supernode ${session.host}:${session.port} from SNodes.dat.`);
+    } catch (error) {
+      setLiveStatus(error.message, true);
+    }
+  });
+
+  loadLiveRoomsBtn.addEventListener('click', async () => {
+    try {
+      const url = roomFeedUrlInput.value.trim() || window.aresNet.defaults.liveChannelFeedUrl;
+      const result = await window.aresNet.fetchLiveChannelFeed(url);
+      localStorage.setItem('ares_live_feed_url', result.url);
+      for (const channel of result.channels) {
+        upsertLiveChannel(channel);
+      }
+      renderChannelLists();
+      setLiveStatus(`Loaded ${result.channels.length} live room target${result.channels.length === 1 ? '' : 's'} from ${result.url}.`);
+    } catch (error) {
+      setLiveStatus(error.message, true);
+    }
+  });
+
+  addRoomLinkBtn.addEventListener('click', async () => {
+    try {
+      const parsed = await window.aresNet.parseLiveChannelTarget(roomLinkInput.value.trim());
+      const room = upsertLiveChannel({ ...parsed, source: 'manual' });
+      roomLinkInput.value = '';
+      setLiveStatus(`Added live target #${room.name} at ${room.host}:${room.port}.`);
+    } catch (error) {
+      setLiveStatus(error.message, true);
+    }
+  });
+
   saveBtn.addEventListener('click', () => {
     const newUsername = usernameInput.value.trim();
     if (newUsername) {
       username = newUsername;
       localStorage.setItem('ares_username', username);
       usernameDisplay.textContent = username;
-      addMessage('System', `${username} changed their username`);
+      addHistory(currentChannel, 'System', `${username} changed their username`, 'system');
     }
     settingsModal.classList.remove('show');
   });
@@ -476,13 +960,14 @@
     if (e.key === 'Enter') handleSend();
   });
 
-  channelTitle.textContent = '#' + currentChannel;
-  if (chatHistory[currentChannel]) {
-    chatlog.innerHTML = chatHistory[currentChannel];
-  } else {
-    addMessage('System', `Welcome to #${currentChannel}, ${username}!`);
+  window.aresNet.onLiveRoomEvent(handleLiveRoomEvent);
+
+  if (currentChannel.type === 'live' && currentChannel.host && currentChannel.port) {
+    upsertLiveChannel(currentChannel);
   }
-  input.focus();
+
+  renderChannelLists();
+  switchChannel(currentChannel.type === 'live' ? currentChannel : { type: 'simulated', name: currentChannel.name || 'general' });
 </script>
 
 </body>
