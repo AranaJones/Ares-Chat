@@ -63,6 +63,36 @@
   .menubar span { margin-right: 14px; cursor: default; }
   .menubar span.link { color: #0A246A; text-decoration: underline; cursor: pointer; }
 
+  .channelbar {
+    background: #ECE9D8;
+    border-bottom: 1px solid #ACA899;
+    padding: 4px 8px;
+    font-size: 11px;
+    color: #444;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    overflow-x: auto;
+  }
+  .channel-tab {
+    padding: 4px 10px;
+    background: #d0ccc0;
+    border: 1px solid #999;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-weight: normal;
+  }
+  .channel-tab.active {
+    background: #fff;
+    border: 1px solid #0A246A;
+    font-weight: bold;
+  }
+  .channel-tab:hover {
+    background: #e8e4d8;
+  }
+
   .toolbar {
     background: #ECE9D8;
     border-bottom: 1px solid #ACA899;
@@ -214,16 +244,21 @@
 
 <div class="window">
   <div class="titlebar">
-    <div class="left"><span class="icon"></span> Ares Galaxy - #ai-chat</div>
+    <div class="left"><span class="icon"></span> Ares Galaxy - <span id="currentChannel">#ai-chat</span></div>
   </div>
   <div class="menubar">
     <span>File</span><span>Search</span><span>Chat</span>
     <span class="link" id="openSettings">Settings (API Key)</span>
     <span class="link" id="openNetwork">Network (supernodes)</span><span>Help</span>
   </div>
+  
+  <div class="channelbar" id="channelbar">
+    <!-- Channel tabs will be inserted here -->
+  </div>
+
   <div class="toolbar">
     <span class="status-dot" id="statusDot"></span> <span id="statusText">Checking connection...</span>
-    <span class="peer-count">| Room: #ai-chat | Peers online: 1,204</span>
+    <span class="peer-count" id="peerInfo">| Room: #ai-chat | Peers online: 1,204</span>
   </div>
 
   <div class="main">
@@ -267,12 +302,12 @@
       log in or fetch chat rooms (that part of the protocol isn't confirmed
       yet). Paste <code>host:port</code> pairs (one per line) or load a real
       <code>SNodes.dat</code> from an existing Ares Galaxy install.</p>
-      <textarea id="nodeInput" rows="5" style="width:100%; font-family:'Courier New',monospace; font-size:11px; border:1px inset #999; padding:4px;" placeholder="203.0.113.10:2091&#10;203.0.113.11:2091"></textarea>
+      <textarea id="nodeInput" rows="5" style="width:100%; font-family:'Courier New',monospace; font-size:11px; border:1px inset #999; padding:4px;" placeholder="203.0.113.10:2091&#10;203.0.113.1[...]
       <div class="modal-actions" style="justify-content:flex-start; margin-top:8px;">
         <button id="loadSNodesBtn">Load SNodes.dat...</button>
         <button id="probeAllBtn">Probe all</button>
       </div>
-      <div id="probeResults" style="margin-top:10px; max-height:220px; overflow-y:auto; font-family:'Courier New',monospace; font-size:11px; background:#fff; border:1px inset #999; padding:4px;"></div>
+      <div id="probeResults" style="margin-top:10px; max-height:220px; overflow-y:auto; font-family:'Courier New',monospace; font-size:11px; background:#fff; border:1px inset #999; padding:4px;">[...]
       <div class="modal-actions" style="margin-top:10px;">
         <button id="closeNetworkBtn">Close</button>
       </div>
@@ -288,10 +323,89 @@
   const statusText = document.getElementById('statusText');
   const settingsOverlay = document.getElementById('settingsOverlay');
   const apiKeyInput = document.getElementById('apiKeyInput');
+  const channelbar = document.getElementById('channelbar');
+  const currentChannelDisplay = document.getElementById('currentChannel');
+  const peerInfo = document.getElementById('peerInfo');
+
+  // Public channels
+  const PUBLIC_CHANNELS = [
+    { name: 'ai-chat', peers: 1204 },
+    { name: 'general', peers: 2150 },
+    { name: 'tech-talk', peers: 890 },
+    { name: 'off-topic', peers: 1567 },
+    { name: 'programming', peers: 742 }
+  ];
 
   const STORAGE_KEY = 'ares_ai_chat_api_key';
+  const CURRENT_CHANNEL_KEY = 'ares_ai_current_channel';
+  let currentChannel = localStorage.getItem(CURRENT_CHANNEL_KEY) || 'ai-chat';
+  let channelHistory = {}; // Store chat history per channel
   const history = [];
-  const SYSTEM_PROMPT = "You are AI_Helper, a friendly and helpful participant in an old-school P2P chatroom (styled after Ares Galaxy). Keep replies conversational and reasonably concise, like a real chatroom message rather than a formal document. You are a generic helpful assistant - answer questions, help with tasks, and chat naturally.";
+  const SYSTEM_PROMPT = "You are AI_Helper, a friendly and helpful participant in an old-school P2P chatroom (styled after Ares Galaxy). Keep replies conversational and reasonably concise, like a chat room participant.";
+
+  function initializeChannels() {
+    channelbar.innerHTML = '';
+    PUBLIC_CHANNELS.forEach(channel => {
+      const tab = document.createElement('div');
+      tab.className = `channel-tab ${channel.name === currentChannel ? 'active' : ''}`;
+      tab.textContent = `#${channel.name}`;
+      tab.addEventListener('click', () => switchChannel(channel.name));
+      channelbar.appendChild(tab);
+    });
+    updateChannelDisplay();
+  }
+
+  function switchChannel(channelName) {
+    if (currentChannel === channelName) return;
+    
+    // Save current channel's history
+    if (!channelHistory[currentChannel]) {
+      channelHistory[currentChannel] = [];
+    }
+    channelHistory[currentChannel] = [...history];
+    
+    // Clear history array
+    history.length = 0;
+    
+    // Switch to new channel
+    currentChannel = channelName;
+    localStorage.setItem(CURRENT_CHANNEL_KEY, currentChannel);
+    
+    // Load new channel's history
+    if (channelHistory[currentChannel]) {
+      history.push(...channelHistory[currentChannel]);
+    }
+    
+    // Update UI
+    updateChannelDisplay();
+    chatlog.innerHTML = '';
+    renderChannelHistory();
+    
+    // Re-render channel tabs
+    document.querySelectorAll('.channel-tab').forEach(tab => {
+      tab.classList.remove('active');
+      if (tab.textContent === `#${currentChannel}`) {
+        tab.classList.add('active');
+      }
+    });
+  }
+
+  function updateChannelDisplay() {
+    currentChannelDisplay.textContent = `#${currentChannel}`;
+    const channel = PUBLIC_CHANNELS.find(c => c.name === currentChannel);
+    if (channel) {
+      peerInfo.textContent = `| Room: #${currentChannel} | Peers online: ${channel.peers.toLocaleString()}`;
+    }
+  }
+
+  function renderChannelHistory() {
+    // Show join message for this channel
+    addSystemLine(`You have joined #${currentChannel}`);
+    addSystemLine('AI_Helper has joined the room');
+    if (history.length === 0) {
+      addUserLine('AI_Helper', `hey, welcome to #${currentChannel}. ask me anything and I'll help out. (set your API key in Settings if you haven't yet)`, true);
+    }
+  }
 
   function getApiKey() {
     return localStorage.getItem(STORAGE_KEY) || '';
@@ -339,10 +453,6 @@
       '<span class="msg-' + (isBot ? 'bot' : 'user') + '">' + escapeHtml(text) + '</span>'
     );
   }
-
-  addSystemLine('You have joined #ai-chat');
-  addSystemLine('AI_Helper has joined the room');
-  addUserLine('AI_Helper', "hey, welcome to the room. ask me anything and I'll help out. (set your API key in Settings if you haven't yet)", true);
 
   async function callClaude(userText) {
     const apiKey = getApiKey();
@@ -440,6 +550,8 @@
   });
 
   refreshStatus();
+  initializeChannels();
+  renderChannelHistory();
   if (!getApiKey()) {
     setTimeout(() => settingsOverlay.classList.add('show'), 300);
   }
