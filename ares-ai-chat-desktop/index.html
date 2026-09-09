@@ -379,7 +379,8 @@
 </div>
 
 <script>
-  const channels = ['general', 'off-topic', 'gaming', 'music', 'tech', 'random'];
+  const defaultChannels = ['general', 'off-topic', 'gaming', 'music', 'tech', 'random'];
+  let channels = [...defaultChannels];
   const chatlog = document.getElementById('chatlog');
   const input = document.getElementById('msgInput');
   const sendBtn = document.getElementById('sendBtn');
@@ -396,13 +397,58 @@
   let username = localStorage.getItem('ares_username') || 'Guest';
   let chatHistory = {};
 
-  channels.forEach(ch => {
-    const item = document.createElement('div');
-    item.className = `channel-item ${ch === currentChannel ? 'active' : ''}`;
-    item.textContent = '#' + ch;
-    item.onclick = (e) => switchChannel(ch, e);
-    channelList.appendChild(item);
+  function renderChannelList() {
+    channelList.innerHTML = '';
+    channels.forEach((ch) => {
+      const item = document.createElement('div');
+      item.className = `channel-item ${ch === currentChannel ? 'active' : ''}`;
+      item.textContent = '#' + ch;
+      item.onclick = (e) => switchChannel(ch, e);
+      channelList.appendChild(item);
+    });
+  }
 
+  function mergeUniqueChannels(baseChannels, additionalChannels) {
+    const merged = [];
+    const seen = new Set();
+
+    [...baseChannels, ...additionalChannels].forEach((channel) => {
+      if (typeof channel !== 'string') return;
+      const normalized = channel.trim();
+      if (!normalized) return;
+      const key = normalized.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      merged.push(normalized);
+    });
+
+    return merged;
+  }
+
+  async function loadAresGalaxyLiveChannels() {
+    if (!window.aresNet || typeof window.aresNet.loadLiveChannels !== 'function') {
+      return [];
+    }
+    try {
+      const liveChannels = await window.aresNet.loadLiveChannels();
+      return Array.isArray(liveChannels) ? liveChannels : [];
+    } catch {
+      return [];
+    }
+  }
+
+  async function initializeLiveChannels() {
+    const liveChannels = await loadAresGalaxyLiveChannels();
+    if (!liveChannels.length) return;
+    channels = mergeUniqueChannels(defaultChannels, liveChannels);
+    renderChannelList();
+    channels.forEach((ch) => {
+      if (!chatHistory[ch]) chatHistory[ch] = [];
+    });
+  }
+
+  renderChannelList();
+  channels.forEach((ch) => {
     if (!chatHistory[ch]) {
       chatHistory[ch] = [];
     }
@@ -482,6 +528,7 @@
   } else {
     addMessage('System', `Welcome to #${currentChannel}, ${username}!`);
   }
+  initializeLiveChannels();
   input.focus();
 </script>
 

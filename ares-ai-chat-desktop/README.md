@@ -35,6 +35,9 @@ The latest Windows installer is available from GitHub Releases:
 
 **AI_Helper chat**: fully real - talks to the actual Anthropic API.
 
+**Live channel list**: loaded at runtime from the Ares Galaxy community room
+list source (`rooms.json`), then merged into the app's channel sidebar.
+
 **"Network (supernodes)" panel**: this is a genuine, working implementation
 of the *first* step the real Ares Galaxy client does - a plain TCP connect
 check against a list of supernode IP:port pairs, to see which ones still
@@ -79,5 +82,7 @@ against `MSG_CLIENT_LOGIN_REQ` / `MSG_SUPERNODE_FIRST_LOG` in
   paper's worked example surfaced via `verifyD64()` rather than hidden
 - `ares-nodes.js` - parses SNodes.dat text format and the binary node
   candidate wire format
+- `ares-live-channels.js` - parses live channel names from the Ares Galaxy
+  community room list source
 - `index.html` - the UI and chat/network logic
 - `package.json` - dependencies and build config

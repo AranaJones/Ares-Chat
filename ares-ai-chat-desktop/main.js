@@ -3,6 +3,7 @@ const path = require('path');
 const net = require('net');
 const fs = require('fs');
 const { parseSNodesText } = require('./ares-nodes');
+const { ARES_GALAXY_LIVE_CHANNELS_URL, parseAresGalaxyLiveChannels } = require('./ares-live-channels');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -70,6 +71,17 @@ ipcMain.handle('load-snodes-file', async () => {
   const text = fs.readFileSync(result.filePaths[0], 'utf8');
   const nodes = parseSNodesText(text);
   return { filePath: result.filePaths[0], nodes };
+});
+
+ipcMain.handle('load-live-channels', async () => {
+  try {
+    const response = await fetch(ARES_GALAXY_LIVE_CHANNELS_URL, { cache: 'no-store' });
+    if (!response.ok) return [];
+    const payload = await response.json();
+    return parseAresGalaxyLiveChannels(payload);
+  } catch {
+    return [];
+  }
 });
 
 app.whenReady().then(() => {
