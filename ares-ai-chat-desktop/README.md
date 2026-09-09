@@ -31,6 +31,15 @@ npm run dist
 The latest Windows installer is available from GitHub Releases:
 - https://github.com/AranaJones/Ares-Chat/releases
 
+## Automated releases
+
+Pushing a tag that matches `v*` (for example, `v1.0.2`) triggers the
+`Release` GitHub Actions workflow (`.github/workflows/release.yml`), which:
+- builds the Windows installer with `npm run dist`
+- uploads the installer as a workflow artifact
+- creates or updates the GitHub Release for that tag with generated notes
+- attaches the installer `.exe` as a release asset
+
 ## What's real vs. simulated
 
 **AI_Helper chat**: fully real - talks to the actual Anthropic API.
