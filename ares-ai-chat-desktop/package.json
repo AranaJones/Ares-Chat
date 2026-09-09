@@ -16,9 +16,9 @@
     "appId": "com.example.areschat",
     "productName": "Ares Chat",
     "directories": { "output": "dist" },
-    "files": ["main.js", "preload.js", "index.html", "ares-crypto.js", "ares-nodes.js"],
+    "files": ["main.js", "preload.js", "index.html", "ares-crypto.js", "ares-nodes.js", "assets/**/*"],
     "mac": { "category": "public.app-category.social-networking" },
-    "win": { "target": "nsis" },
-    "linux": { "target": "AppImage" }
+    "win": { "target": "nsis", "icon": "assets/ares-galaxy-icon.ico" },
+    "linux": { "target": "AppImage", "icon": "assets/ares-galaxy-icon.png" }
   }
 }
