@@ -255,12 +255,27 @@
     border-radius: 3px;
     font-size: 14px;
     font-family: Arial, sans-serif;
+    margin-bottom: 5px;
   }
 
   .modal-field input:focus {
     outline: none;
     border-color: #3498db;
     box-shadow: 0 0 3px rgba(52, 152, 219, 0.3);
+  }
+
+  .modal-field .info-link {
+    font-size: 11px;
+    color: #3498db;
+  }
+
+  .modal-field .info-link a {
+    color: #3498db;
+    text-decoration: none;
+  }
+
+  .modal-field .info-link a:hover {
+    text-decoration: underline;
   }
 
   .modal-actions {
@@ -328,6 +343,12 @@
     <div class="modal-field">
       <label for="usernameInput">Username:</label>
       <input type="text" id="usernameInput" placeholder="Enter your username" maxlength="20" />
+    </div>
+    <div class="modal-field">
+      <label>Releases & Updates:</label>
+      <div class="info-link">
+        <a href="https://github.com/AranaJones/Ares-AI/releases/tag/Ares" target="_blank">📦 Download Latest Release</a>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="save" id="saveBtn">Save</button>
@@ -410,7 +431,7 @@
         if (data.length > 0) {
           const latestCommit = data[0].sha;
           if (lastCommitHash && latestCommit !== lastCommitHash) {
-            addMessage('System', `🔄 NEW VERSION AVAILABLE! Check GitHub for updates: https://github.com/AranaJones/Ares-AI`, true);
+            addMessage('System', `🔄 NEW VERSION AVAILABLE! Check GitHub for updates: https://github.com/AranaJones/Ares-AI/releases/tag/Ares`, true);
           }
           localStorage.setItem('ares_last_commit', latestCommit);
           lastCommitHash = latestCommit;
