@@ -9,6 +9,7 @@ experimental network panel for probing real Ares Galaxy supernodes.
 - [Node.js](https://nodejs.org) 18 or newer (includes npm)
 - An Anthropic API key from https://console.anthropic.com for the AI_Helper
   chat participant (not needed for the network probe panel)
+- Optional for HashLink component: [Haxe](https://haxe.org) + [HashLink runtime (`hl`)](https://hashlink.haxe.org)
 
 ## Run it in development
 
@@ -19,6 +20,23 @@ npm start
 ```
 
 Enter your API key in Settings when prompted to enable AI_Helper.
+
+## HashLink component (optional)
+
+The desktop app now includes an optional HashLink component wired into the app:
+
+- Build it:
+  ```bash
+  npm run build:hashlink
+  ```
+- Run it directly:
+  ```bash
+  npm run run:hashlink
+  ```
+- In the app, open **Settings** and click **HashLink Ping**.
+
+If HashLink is not installed, or the `.hl` program is not built yet, the app
+keeps working normally and shows a status message instead of failing.
 
 ## Build a real installer (.exe / .app / .AppImage)
 
@@ -81,3 +99,5 @@ against `MSG_CLIENT_LOGIN_REQ` / `MSG_SUPERNODE_FIRST_LOG` in
   candidate wire format
 - `index.html` - the UI and chat/network logic
 - `package.json` - dependencies and build config
+- `hashlink/src/Main.hx` + `hashlink/build.hxml` - optional HashLink component
+  and build target

@@ -372,6 +372,7 @@
       <input type="text" id="usernameInput" placeholder="Enter your username" maxlength="20" />
     </div>
     <div class="modal-actions">
+      <button class="cancel" id="hashLinkBtn">HashLink Ping</button>
       <button class="save" id="saveBtn">Save</button>
       <button class="cancel" id="cancelBtn">Cancel</button>
     </div>
@@ -389,6 +390,7 @@
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsModal = document.getElementById('settingsModal');
   const usernameInput = document.getElementById('usernameInput');
+  const hashLinkBtn = document.getElementById('hashLinkBtn');
   const saveBtn = document.getElementById('saveBtn');
   const cancelBtn = document.getElementById('cancelBtn');
 
@@ -467,6 +469,17 @@
     settingsModal.classList.remove('show');
   });
 
+  hashLinkBtn.addEventListener('click', async () => {
+    const result = await window.aresNet.runHashLinkPing();
+    if (!result || result.ok !== true) {
+      const reason = result?.reason || result?.error || result?.stderr || 'HashLink ping failed';
+      addMessage('System', `HashLink: ${reason}`, true);
+      return;
+    }
+    const output = (result.stdout || '').trim() || 'ok';
+    addMessage('System', `HashLink: ${output}`, true);
+  });
+
   usernameInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') saveBtn.click();
   });
@@ -482,6 +495,15 @@
   } else {
     addMessage('System', `Welcome to #${currentChannel}, ${username}!`);
   }
+  window.aresNet.hashLinkStatus().then((status) => {
+    if (!status || !status.available) {
+      addMessage('System', `HashLink unavailable: ${status?.reason || 'unknown reason'}`);
+      return;
+    }
+    addMessage('System', 'HashLink component ready (use Settings -> HashLink Ping).');
+  }).catch(() => {
+    addMessage('System', 'HashLink unavailable.');
+  });
   input.focus();
 </script>
 
