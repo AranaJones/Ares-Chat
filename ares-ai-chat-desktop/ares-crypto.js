@@ -9,9 +9,23 @@
 // Key evolves each step using the INPUT byte just processed:
 //   key = ((inByte + key) * MULT + ADD) & 0xFFFF   (16-bit wraparound)
 //
-// This is symmetric (same function encrypts and decrypts) because the key
-// advance always uses the ciphertext byte, whether that byte is being
-// produced (encrypt) or consumed (decrypt).
+// This helper applies the paper's documented byte transform to the input bytes
+// you pass in. Because the published worked example also contains a byte-level
+// discrepancy (surfaced by verifyD64() below), this should be treated as a
+// narrow utility for documented local-data experiments, not as a confirmed
+// live-network handshake implementation.
+function normalizeBytes(bytes) {
+  if (Buffer.isBuffer(bytes)) return bytes;
+  if (bytes instanceof Uint8Array) return Buffer.from(bytes);
+  throw new TypeError('bytes must be a Buffer or Uint8Array');
+}
+
+function normalizeKey(initialKey) {
+  if (!Number.isInteger(initialKey)) {
+    throw new TypeError('initialKey must be an integer');
+  }
+  return initialKey & 0xFFFF;
+}
 //
 // CONFIRMED constants (from the paper's worked example, function "d64"):
 //   MULT = 12559, ADD = 14926
@@ -23,10 +37,11 @@
 // a known plaintext/ciphertext pair.
 
 function d64(bytes, initialKey) {
-  let key = initialKey & 0xFFFF;
-  const out = Buffer.alloc(bytes.length);
-  for (let i = 0; i < bytes.length; i++) {
-    const inByte = bytes[i];
+  const input = normalizeBytes(bytes);
+  let key = normalizeKey(initialKey);
+  const out = Buffer.alloc(input.length);
+  for (let i = 0; i < input.length; i++) {
+    const inByte = input[i];
     const xorByte = (key >> 8) & 0xFF;
     out[i] = inByte ^ xorByte;
     key = ((inByte + key) * 12559 + 14926) & 0xFFFF;
@@ -50,24 +65,16 @@ function verifyD64() {
     key,
     expectedFirstXorByte,
     actualFirstXorByte,
-    matches: expectedFirstXorByte === actualFirstXorByte
+    matches: expectedFirstXorByte === actualFirstXorByte,
+    note: 'The published example disagrees with the documented high-byte XOR step, so d64 should not be treated as handshake-proof.'
   };
 }
 
 // Placeholder for the d67 variant used in the nested example
-// d67(d64(s,24884),7193). MULT/ADD constants are NOT confirmed - using the
-// same constants as d64 as a guess. This WILL likely be wrong. Exists here
-// only as a slot to fill in once real constants are found.
-function d67Placeholder(bytes, initialKey, mult = 12559, add = 14926) {
-  let key = initialKey & 0xFFFF;
-  const out = Buffer.alloc(bytes.length);
-  for (let i = 0; i < bytes.length; i++) {
-    const inByte = bytes[i];
-    const xorByte = (key >> 8) & 0xFF;
-    out[i] = inByte ^ xorByte;
-    key = ((inByte + key) * mult + add) & 0xFFFF;
-  }
-  return out;
+// d67(d64(s,24884),7193). The constants are still unverified, so returning any
+// transformed data here would be misleading.
+function d67Placeholder() {
+  throw new Error('d67Placeholder is unavailable until the real d67 constants are verified');
 }
 
 module.exports = { d64, d67Placeholder, verifyD64 };

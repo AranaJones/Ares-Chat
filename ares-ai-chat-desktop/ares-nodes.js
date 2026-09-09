@@ -12,7 +12,26 @@
 //    binary, 6 bytes per node (4-byte IP + 2-byte port), concatenated.
 //    This matches aresnodes_add_candidates() in the real source.
 
+function isValidPort(port) {
+  return Number.isInteger(port) && port > 0 && port <= 65535;
+}
+
+function parseStrictInteger(value) {
+  if (typeof value === 'number' && Number.isInteger(value)) return value;
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!/^\d+$/.test(trimmed)) return null;
+  return Number.parseInt(trimmed, 10);
+}
+
+function parseCounter(value) {
+  const parsed = parseStrictInteger(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
 function parseSNodesText(text) {
+  if (typeof text !== 'string') return [];
+
   const nodes = [];
   const lines = text.split(/\r?\n/);
   for (const rawLine of lines) {
@@ -21,41 +40,54 @@ function parseSNodesText(text) {
     if (line.includes('<') || line.includes('#')) continue;
     const parts = line.split(/\s+/);
     if (parts.length < 2) continue;
-    const host = parts[0];
-    const port = parseInt(parts[1], 10);
-    if (!port || host === '127.0.0.1') continue;
+    const host = parts[0].trim();
+    const port = parseStrictInteger(parts[1]);
+    if (!host || !isValidPort(port) || host === '127.0.0.1') continue;
     nodes.push({
       host,
       port,
-      reports: parseInt(parts[2], 10) || 0,
-      attempts: parseInt(parts[3], 10) || 0,
-      connects: parseInt(parts[4], 10) || 0,
-      firstSeen: parseInt(parts[5], 10) || 0,
-      lastSeen: parseInt(parts[6], 10) || 0,
-      lastAttempt: parseInt(parts[7], 10) || 0
+      reports: parseCounter(parts[2]),
+      attempts: parseCounter(parts[3]),
+      connects: parseCounter(parts[4]),
+      firstSeen: parseCounter(parts[5]),
+      lastSeen: parseCounter(parts[6]),
+      lastAttempt: parseCounter(parts[7])
     });
   }
   return nodes;
 }
 
 function parseBinaryCandidates(buffer) {
+  if (!Buffer.isBuffer(buffer) && !(buffer instanceof Uint8Array)) return [];
+
+  const bytes = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
   const nodes = [];
   let offset = 0;
-  while (offset + 6 <= buffer.length) {
+  while (offset + 6 <= bytes.length) {
     const ip =
-      `${buffer[offset]}.${buffer[offset + 1]}.${buffer[offset + 2]}.${buffer[offset + 3]}`;
-    const port = buffer.readUInt16LE(offset + 4);
+      `${bytes[offset]}.${bytes[offset + 1]}.${bytes[offset + 2]}.${bytes[offset + 3]}`;
+    const port = bytes.readUInt16LE(offset + 4);
     offset += 6;
-    if (port === 0) continue;
+    if (!isValidPort(port) || ip === '0.0.0.0' || ip === '127.0.0.1') continue;
     nodes.push({ host: ip, port });
   }
   return nodes;
 }
 
 function encodeBinaryCandidate(host, port) {
-  const parts = host.split('.').map(Number);
-  if (parts.length !== 4 || parts.some((p) => Number.isNaN(p))) {
+  if (typeof host !== 'string') {
+    throw new TypeError('invalid IPv4 host: ' + host);
+  }
+
+  const parts = host.split('.').map((part) => parseStrictInteger(part));
+  if (
+    parts.length !== 4 ||
+    parts.some((p) => !Number.isInteger(p) || p < 0 || p > 255)
+  ) {
     throw new Error('invalid IPv4 host: ' + host);
+  }
+  if (!isValidPort(port)) {
+    throw new Error('invalid port: ' + port);
   }
   const buf = Buffer.alloc(6);
   for (let i = 0; i < 4; i++) buf[i] = parts[i];
