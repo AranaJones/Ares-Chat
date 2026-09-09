@@ -23,7 +23,7 @@ function parseSNodesText(text) {
     if (parts.length < 2) continue;
     const host = parts[0];
     const port = parseInt(parts[1], 10);
-    if (!port || host === '127.0.0.1') continue;
+    if (!Number.isInteger(port) || port < 1 || port > 65535 || host === '127.0.0.1') continue;
     nodes.push({
       host,
       port,
@@ -39,6 +39,9 @@ function parseSNodesText(text) {
 }
 
 function parseBinaryCandidates(buffer) {
+  if (!Buffer.isBuffer(buffer)) {
+    throw new TypeError('buffer must be a Buffer');
+  }
   const nodes = [];
   let offset = 0;
   while (offset + 6 <= buffer.length) {
@@ -54,8 +57,14 @@ function parseBinaryCandidates(buffer) {
 
 function encodeBinaryCandidate(host, port) {
   const parts = host.split('.').map(Number);
-  if (parts.length !== 4 || parts.some((p) => Number.isNaN(p))) {
+  if (
+    parts.length !== 4 ||
+    parts.some((p) => !Number.isInteger(p) || p < 0 || p > 255)
+  ) {
     throw new Error('invalid IPv4 host: ' + host);
+  }
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error('invalid port: ' + port);
   }
   const buf = Buffer.alloc(6);
   for (let i = 0; i < 4; i++) buf[i] = parts[i];
