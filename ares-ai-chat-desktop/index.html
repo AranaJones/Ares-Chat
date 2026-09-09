@@ -27,6 +27,8 @@
     border-radius: 5px;
     overflow-y: auto;
     padding: 10px 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .sidebar-header {
@@ -53,6 +55,34 @@
     font-weight: bold;
   }
 
+  #channelList {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .sidebar-footer {
+    padding: 10px;
+    border-top: 1px solid #34495e;
+    margin-top: auto;
+  }
+
+  .settings-btn {
+    width: 100%;
+    padding: 8px;
+    background: #34495e;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+
+  .settings-btn:hover {
+    background: #2c3e50;
+  }
+
   .main {
     flex: 1;
     display: flex;
@@ -68,11 +98,19 @@
     color: white;
     padding: 15px;
     border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 
   .header h2 {
     margin: 0;
     font-size: 16px;
+  }
+
+  .header .username {
+    font-size: 12px;
+    color: #bdc3c7;
   }
 
   .chatlog {
@@ -165,6 +203,98 @@
   .inputbar button:active {
     background: #1f618d;
   }
+
+  /* Modal Styles */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-overlay.show {
+    display: flex;
+  }
+
+  .modal {
+    background: white;
+    border-radius: 5px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    max-width: 400px;
+    width: 90%;
+  }
+
+  .modal h3 {
+    margin-top: 0;
+    color: #2c3e50;
+  }
+
+  .modal-field {
+    margin-bottom: 15px;
+  }
+
+  .modal-field label {
+    display: block;
+    margin-bottom: 5px;
+    color: #2c3e50;
+    font-weight: bold;
+    font-size: 12px;
+  }
+
+  .modal-field input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+  }
+
+  .modal-field input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 3px rgba(52, 152, 219, 0.3);
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .modal-actions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+
+  .modal-actions .save {
+    background: #3498db;
+    color: white;
+  }
+
+  .modal-actions .save:hover {
+    background: #2980b9;
+  }
+
+  .modal-actions .cancel {
+    background: #ecf0f1;
+    color: #2c3e50;
+  }
+
+  .modal-actions .cancel:hover {
+    background: #ddd;
+  }
 </style>
 </head>
 <body>
@@ -173,16 +303,35 @@
   <div class="sidebar">
     <div class="sidebar-header">Channels</div>
     <div id="channelList"></div>
+    <div class="sidebar-footer">
+      <button class="settings-btn" id="settingsBtn">⚙️ Settings</button>
+    </div>
   </div>
 
   <div class="main">
     <div class="header">
       <h2 id="channelTitle">#general</h2>
+      <div class="username" id="usernameDisplay">Guest</div>
     </div>
     <div class="chatlog" id="chatlog"></div>
     <div class="inputbar">
       <input type="text" id="msgInput" placeholder="Say something..." autocomplete="off" />
       <button id="sendBtn">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h3>Settings</h3>
+    <div class="modal-field">
+      <label for="usernameInput">Username:</label>
+      <input type="text" id="usernameInput" placeholder="Enter your username" maxlength="20" />
+    </div>
+    <div class="modal-actions">
+      <button class="save" id="saveBtn">Save</button>
+      <button class="cancel" id="cancelBtn">Cancel</button>
     </div>
   </div>
 </div>
@@ -194,8 +343,15 @@
   const sendBtn = document.getElementById('sendBtn');
   const channelTitle = document.getElementById('channelTitle');
   const channelList = document.getElementById('channelList');
+  const usernameDisplay = document.getElementById('usernameDisplay');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsModal = document.getElementById('settingsModal');
+  const usernameInput = document.getElementById('usernameInput');
+  const saveBtn = document.getElementById('saveBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
 
   let currentChannel = localStorage.getItem('ares_channel') || 'general';
+  let username = localStorage.getItem('ares_username') || 'Guest';
   let chatHistory = {};
   let lastCommitHash = localStorage.getItem('ares_last_commit') || '';
 
@@ -211,6 +367,9 @@
       chatHistory[ch] = [];
     }
   });
+
+  // Update username display
+  usernameDisplay.textContent = username;
 
   function switchChannel(ch) {
     // Save current channel
@@ -236,10 +395,10 @@
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
-  function addMessage(username, text, isUpdate = false) {
+  function addMessage(user, text, isUpdate = false) {
     const msg = document.createElement('div');
     msg.className = isUpdate ? 'message update' : 'message';
-    msg.innerHTML = `<span class="message-time">${timestamp()}</span><span class="message-user">${username}</span><div class="message-text">${text}</div>`;
+    msg.innerHTML = `<span class="message-time">${timestamp()}</span><span class="message-user">${user}</span><div class="message-text">${text}</div>`;
     chatlog.appendChild(msg);
     chatlog.scrollTop = chatlog.scrollHeight;
   }
@@ -264,10 +423,36 @@
     const text = input.value.trim();
     if (!text) return;
     
-    addMessage('You', text);
+    addMessage(username, text);
     input.value = '';
     input.focus();
   }
+
+  // Settings Modal Handlers
+  settingsBtn.addEventListener('click', () => {
+    usernameInput.value = username;
+    settingsModal.classList.add('show');
+    usernameInput.focus();
+  });
+
+  saveBtn.addEventListener('click', () => {
+    const newUsername = usernameInput.value.trim();
+    if (newUsername) {
+      username = newUsername;
+      localStorage.setItem('ares_username', username);
+      usernameDisplay.textContent = username;
+      addMessage('System', `${username} changed their username`);
+    }
+    settingsModal.classList.remove('show');
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    settingsModal.classList.remove('show');
+  });
+
+  usernameInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') saveBtn.click();
+  });
 
   sendBtn.addEventListener('click', handleSend);
   input.addEventListener('keypress', (e) => {
@@ -279,7 +464,7 @@
   if (chatHistory[currentChannel]) {
     chatlog.innerHTML = chatHistory[currentChannel];
   } else {
-    addMessage('System', `Welcome to #${currentChannel}!`);
+    addMessage('System', `Welcome to #${currentChannel}, ${username}!`);
   }
   input.focus();
 
