@@ -3,6 +3,9 @@ const path = require('path');
 const net = require('net');
 const fs = require('fs');
 const { parseSNodesText } = require('./ares-nodes');
+const { ensureLiveChannelServer, DEFAULT_HOST, DEFAULT_PORT, DEFAULT_PATH } = require('./live-channel-server');
+
+let liveChannelRelay = null;
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -72,12 +75,48 @@ ipcMain.handle('load-snodes-file', async () => {
   return { filePath: result.filePaths[0], nodes };
 });
 
+ipcMain.handle('get-live-channel-config', async () => {
+  if (!liveChannelRelay) {
+    liveChannelRelay = await ensureLiveChannelServer({
+      host: DEFAULT_HOST,
+      port: DEFAULT_PORT,
+      pathname: DEFAULT_PATH
+    });
+  }
+
+  return {
+    channel: 'ares-live',
+    url: liveChannelRelay.url,
+    managedByApp: liveChannelRelay.owned
+  };
+});
+
 app.whenReady().then(() => {
-  createWindow();
+  ensureLiveChannelServer({
+    host: DEFAULT_HOST,
+    port: DEFAULT_PORT,
+    pathname: DEFAULT_PATH
+  })
+    .then((relay) => {
+      liveChannelRelay = relay;
+    })
+    .catch((error) => {
+      console.error('Failed to prepare live channel relay:', error);
+    })
+    .finally(() => {
+      createWindow();
+    });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+});
+
+app.on('before-quit', () => {
+  if (liveChannelRelay && liveChannelRelay.owned && liveChannelRelay.wss && liveChannelRelay.server) {
+    liveChannelRelay.wss.close();
+    liveChannelRelay.server.close();
+  }
 });
 
 app.on('window-all-closed', () => {
