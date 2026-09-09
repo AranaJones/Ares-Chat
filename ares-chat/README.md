@@ -13,7 +13,7 @@ experimental network panel for probing real Ares Galaxy supernodes.
 ## Run it in development
 
 ```bash
-cd ares-ai-chat-desktop
+cd ares-chat
 npm install
 npm start
 ```
