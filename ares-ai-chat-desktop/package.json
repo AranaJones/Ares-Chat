@@ -13,11 +13,26 @@
   "build": {
     "appId": "com.ares.chat",
     "productName": "Ares Chat",
+    "icon": "assets/ares-logo.png",
     "files": [
       "**/*"
     ],
     "directories": {
       "output": "dist"
+    },
+    "mac": {
+      "icon": "assets/ares-logo.icns"
+    },
+    "win": {
+      "icon": "assets/ares-logo.ico"
+    },
+    "linux": {
+      "icon": "assets/ares-logo.png"
+    },
+    "nsis": {
+      "installerIcon": "assets/ares-logo.ico",
+      "uninstallerIcon": "assets/ares-logo.ico",
+      "installerHeaderIcon": "assets/ares-logo.ico"
     }
   }
 }

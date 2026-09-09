@@ -4,12 +4,18 @@ const net = require('net');
 const fs = require('fs');
 const { parseSNodesText } = require('./ares-nodes');
 
+const appIconPng = path.join(__dirname, 'assets', 'ares-logo.png');
+const appIcon = process.platform === 'win32'
+  ? path.join(__dirname, 'assets', 'ares-logo.ico')
+  : appIconPng;
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 780,
     height: 680,
     resizable: true,
     autoHideMenuBar: true,
+    icon: appIcon,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -73,6 +79,10 @@ ipcMain.handle('load-snodes-file', async () => {
 });
 
 app.whenReady().then(() => {
+  if (process.platform === 'darwin' && app.dock) {
+    app.dock.setIcon(appIconPng);
+  }
+
   createWindow();
 
   app.on('activate', () => {
