@@ -26,6 +26,19 @@ Enter your API key in Settings when prompted to enable AI_Helper.
 npm run dist
 ```
 
+To build the Windows NSIS installer specifically:
+
+```bash
+npm run dist:win
+```
+
+The Windows installer is written to `dist/` as
+`Ares.AI.Chat.Setup.<version>.exe`.
+
+Publishing a GitHub Release in `AranaJones/Ares-AI` runs the existing
+`Build Windows installer` workflow on Windows and attaches that installer
+asset to the release automatically.
+
 ## What's real vs. simulated
 
 **AI_Helper chat**: fully real - talks to the actual Anthropic API.
