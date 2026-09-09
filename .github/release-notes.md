@@ -34,4 +34,4 @@ npm run dist
 - Network supernode handshake not fully implemented (see README for details)
 
 ## Thank You
-Thanks for using Ares AI Chat! For issues, suggestions, or feature requests, visit the [GitHub repository](https://github.com/AranaJones/Ares-AI).
+Thanks for using Ares AI Chat! For issues, suggestions, or feature requests, visit the [GitHub repository](https://github.com/AranaJones/Ares-Chat).
