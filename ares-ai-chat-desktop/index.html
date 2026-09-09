@@ -38,6 +38,43 @@
     margin-bottom: 5px;
   }
 
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .sidebar-logo {
+    width: clamp(34px, 6vw, 42px);
+    height: clamp(34px, 6vw, 42px);
+    flex: 0 0 auto;
+  }
+
+  .sidebar-title {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+
+  .sidebar-title-main {
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  .sidebar-title-sub {
+    font-size: 11px;
+    color: #f5c976;
+    letter-spacing: 1px;
+  }
+
+  .sidebar-section {
+    font-size: 11px;
+    color: #bdc3c7;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
   .channel-item {
     padding: 8px 12px;
     cursor: pointer;
@@ -316,7 +353,16 @@
 
 <div class="container">
   <div class="sidebar">
-    <div class="sidebar-header">Channels</div>
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <img class="sidebar-logo" src="assets/ares-galaxy-logo.svg" alt="Ares Galaxy logo" />
+        <div class="sidebar-title">
+          <span class="sidebar-title-main">ARES</span>
+          <span class="sidebar-title-sub">GALAXY</span>
+        </div>
+      </div>
+      <div class="sidebar-section">Channels</div>
+    </div>
     <div id="channelList"></div>
     <div class="sidebar-footer">
       <button class="settings-btn" id="settingsBtn">⚙️ Settings</button>
