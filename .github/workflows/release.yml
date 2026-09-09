@@ -1,0 +1,82 @@
+name: Release desktop app
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to release (for manual re-runs)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ares-ai-chat-desktop
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build installer
+        run: npm run dist -- --win
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ares-ai-chat-windows-installer
+          path: ares-ai-chat-desktop/dist/*.exe
+
+      - name: Resolve release notes
+        id: release_notes
+        shell: bash
+        run: |
+          tag_name="${GITHUB_REF_NAME}"
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            tag_name="${{ github.event.inputs.tag }}"
+          fi
+
+          echo "tag_name=${tag_name}" >> "$GITHUB_OUTPUT"
+
+          notes_path=".github/release-notes/${tag_name}.md"
+          if [ -f "${GITHUB_WORKSPACE}/${notes_path}" ]; then
+            echo "has_body_path=true" >> "$GITHUB_OUTPUT"
+            echo "body_path=${notes_path}" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_body_path=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish GitHub Release
+        if: steps.release_notes.outputs.has_body_path == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_notes.outputs.tag_name }}
+          name: Ares AI Chat ${{ steps.release_notes.outputs.tag_name }}
+          body_path: ${{ steps.release_notes.outputs.body_path }}
+          files: ares-ai-chat-desktop/dist/*.exe
+          fail_on_unmatched_files: true
+
+      - name: Publish GitHub Release with generated notes
+        if: steps.release_notes.outputs.has_body_path != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_notes.outputs.tag_name }}
+          name: Ares AI Chat ${{ steps.release_notes.outputs.tag_name }}
+          files: ares-ai-chat-desktop/dist/*.exe
+          fail_on_unmatched_files: true
+          generate_release_notes: true

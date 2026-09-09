@@ -26,6 +26,20 @@ Enter your API key in Settings when prompted to enable AI_Helper.
 npm run dist
 ```
 
+## Release the Windows installer on GitHub
+
+Desktop releases are built by GitHub Actions from version tags that match
+`v*`.
+
+1. Update `package.json` to the version you want to release.
+2. Optionally add matching release notes at
+   `.github/release-notes/<tag>.md` (for example
+   `.github/release-notes/v1.1.0.md`).
+3. Push the version tag, such as `v1.1.0`.
+
+The release workflow builds `ares-ai-chat-desktop/dist/*.exe`, uploads it as
+the GitHub Release asset, and also keeps the installer as a workflow artifact.
+
 ## What's real vs. simulated
 
 **AI_Helper chat**: fully real - talks to the actual Anthropic API.
