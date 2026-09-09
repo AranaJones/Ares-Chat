@@ -137,6 +137,22 @@
     color: #bdc3c7;
     white-space: nowrap;
     flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .username-avatar,
+  .message-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex: 0 0 auto;
+  }
+
+  .username-avatar {
+    border: 1px solid rgba(255,255,255,0.35);
   }
 
   .chatlog {
@@ -171,6 +187,13 @@
   .message-user {
     font-weight: bold;
     color: #2c3e50;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .message-avatar {
+    border: 1px solid #ddd;
   }
 
   .message-time {
@@ -354,7 +377,10 @@
         <img src="assets/ares-logo.png" alt="Ares Galaxy logo" class="brand-logo" />
         <h2 id="channelTitle">#general</h2>
       </div>
-      <div class="username" id="usernameDisplay">Guest</div>
+      <div class="username" id="usernameDisplay">
+        <img class="username-avatar" id="usernameAvatar" alt="" hidden />
+        <span id="usernameText">Guest</span>
+      </div>
     </div>
     <div class="chatlog" id="chatlog"></div>
     <div class="inputbar">
@@ -371,6 +397,10 @@
       <label for="usernameInput">Username:</label>
       <input type="text" id="usernameInput" placeholder="Enter your username" maxlength="20" />
     </div>
+    <div class="modal-field">
+      <label for="avatarInput">Avatar:</label>
+      <input type="file" id="avatarInput" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" />
+    </div>
     <div class="modal-actions">
       <button class="save" id="saveBtn">Save</button>
       <button class="cancel" id="cancelBtn">Cancel</button>
@@ -386,14 +416,18 @@
   const channelTitle = document.getElementById('channelTitle');
   const channelList = document.getElementById('channelList');
   const usernameDisplay = document.getElementById('usernameDisplay');
+  const usernameAvatar = document.getElementById('usernameAvatar');
+  const usernameText = document.getElementById('usernameText');
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsModal = document.getElementById('settingsModal');
   const usernameInput = document.getElementById('usernameInput');
+  const avatarInput = document.getElementById('avatarInput');
   const saveBtn = document.getElementById('saveBtn');
   const cancelBtn = document.getElementById('cancelBtn');
 
   let currentChannel = localStorage.getItem('ares_channel') || 'general';
   let username = localStorage.getItem('ares_username') || 'Guest';
+  let avatarDataUrl = getStoredAvatar();
   let chatHistory = {};
 
   channels.forEach(ch => {
@@ -408,7 +442,7 @@
     }
   });
 
-  usernameDisplay.textContent = username;
+  updateUsernameDisplay();
 
   function switchChannel(ch, e) {
     chatHistory[currentChannel] = chatlog.innerHTML;
@@ -433,9 +467,74 @@
   function addMessage(user, text, isUpdate = false) {
     const msg = document.createElement('div');
     msg.className = isUpdate ? 'message update' : 'message';
-    msg.innerHTML = `<span class="message-time">${timestamp()}</span><span class="message-user">${user}</span><div class="message-text">${text}</div>`;
+    const time = document.createElement('span');
+    time.className = 'message-time';
+    time.textContent = timestamp();
+
+    const userLabel = document.createElement('span');
+    userLabel.className = 'message-user';
+    if (user === username && avatarDataUrl) {
+      const avatar = document.createElement('img');
+      avatar.className = 'message-avatar';
+      avatar.src = avatarDataUrl;
+      avatar.alt = '';
+      userLabel.appendChild(avatar);
+    }
+    userLabel.appendChild(document.createTextNode(user));
+
+    const messageText = document.createElement('div');
+    messageText.className = 'message-text';
+    messageText.textContent = text;
+
+    msg.appendChild(time);
+    msg.appendChild(userLabel);
+    msg.appendChild(messageText);
     chatlog.appendChild(msg);
     chatlog.scrollTop = chatlog.scrollHeight;
+  }
+
+  function isSafeAvatarDataUrl(value) {
+    return /^data:image\/(?:png|jpeg|gif|webp|bmp);base64,[a-z0-9+/=]+$/i.test(value);
+  }
+
+  function getStoredAvatar() {
+    const storedAvatar = localStorage.getItem('ares_avatar') || '';
+    if (!storedAvatar || isSafeAvatarDataUrl(storedAvatar)) {
+      return storedAvatar;
+    }
+    localStorage.removeItem('ares_avatar');
+    return '';
+  }
+
+  function updateUsernameDisplay() {
+    usernameText.textContent = username;
+    if (avatarDataUrl) {
+      usernameAvatar.src = avatarDataUrl;
+      usernameAvatar.hidden = false;
+      return;
+    }
+    usernameAvatar.removeAttribute('src');
+    usernameAvatar.hidden = true;
+  }
+
+  function saveSettings(nextAvatarDataUrl) {
+    const newUsername = usernameInput.value.trim();
+    if (newUsername) {
+      username = newUsername;
+      localStorage.setItem('ares_username', username);
+      addMessage('System', `${username} changed their username`);
+    }
+
+    avatarDataUrl = nextAvatarDataUrl;
+    if (avatarDataUrl) {
+      localStorage.setItem('ares_avatar', avatarDataUrl);
+    } else {
+      localStorage.removeItem('ares_avatar');
+    }
+
+    updateUsernameDisplay();
+    avatarInput.value = '';
+    settingsModal.classList.remove('show');
   }
 
   function handleSend() {
@@ -448,22 +547,40 @@
 
   settingsBtn.addEventListener('click', () => {
     usernameInput.value = username;
+    avatarInput.value = '';
     settingsModal.classList.add('show');
     usernameInput.focus();
   });
 
   saveBtn.addEventListener('click', () => {
-    const newUsername = usernameInput.value.trim();
-    if (newUsername) {
-      username = newUsername;
-      localStorage.setItem('ares_username', username);
-      usernameDisplay.textContent = username;
-      addMessage('System', `${username} changed their username`);
+    const selectedFile = avatarInput.files && avatarInput.files[0];
+    if (!selectedFile) {
+      saveSettings(avatarDataUrl);
+      return;
     }
-    settingsModal.classList.remove('show');
+
+    if (!/^image\/(?:png|jpeg|gif|webp|bmp)$/i.test(selectedFile.type)) {
+      window.alert('Please choose a PNG, JPEG, GIF, WebP, or BMP image.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const nextAvatarDataUrl = String(reader.result || '');
+      if (!isSafeAvatarDataUrl(nextAvatarDataUrl)) {
+        window.alert('The selected image could not be saved as an avatar.');
+        return;
+      }
+      saveSettings(nextAvatarDataUrl);
+    };
+    reader.onerror = () => {
+      window.alert('The selected image could not be read.');
+    };
+    reader.readAsDataURL(selectedFile);
   });
 
   cancelBtn.addEventListener('click', () => {
+    avatarInput.value = '';
     settingsModal.classList.remove('show');
   });
 
