@@ -1,0 +1,3 @@
+-cp hashlink/src
+-main Main
+-hl hashlink/bin/ares_hashlink.hl
