@@ -20,7 +20,38 @@ npm start
 
 Enter your API key in Settings when prompted to enable AI_Helper.
 
-## Build a real installer (.exe / .app / .AppImage)
+## Windows setup and build (.exe)
+
+### Prerequisites
+
+- Windows 10/11
+- [Node.js](https://nodejs.org) 18+ (includes npm)
+- PowerShell 5.1+ or PowerShell 7+
+
+### Install dependencies (PowerShell)
+
+```powershell
+cd ares-ai-chat-desktop
+.\install-windows.ps1
+```
+
+### Build the Windows installer (.exe)
+
+```powershell
+cd ares-ai-chat-desktop
+.\build-windows.ps1
+```
+
+The installer is generated in `ares-ai-chat-desktop\dist\` as an `.exe`.
+
+### Run the app (development)
+
+```powershell
+cd ares-ai-chat-desktop
+npm start
+```
+
+## Build installers for current platform(s)
 
 ```bash
 npm run dist
