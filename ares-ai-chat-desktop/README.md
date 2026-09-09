@@ -1,4 +1,4 @@
-# Ares AI Chat (desktop)
+# Ares Chat (desktop)
 
 A retro Ares Galaxy-style chatroom window, running as a real desktop app
 (Electron), with an LLM-powered chat participant called AI_Helper, plus an
@@ -30,6 +30,9 @@ npm run dist
 
 The latest Windows installer is available from GitHub Releases:
 - https://github.com/AranaJones/Ares-Chat/releases
+
+Installer naming follows the Electron app product name and version, for example:
+- `Ares Chat Setup 1.0.2.exe`
 
 ## What's real vs. simulated
 
