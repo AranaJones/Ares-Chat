@@ -26,6 +26,34 @@ Enter your API key in Settings when prompted to enable AI_Helper.
 npm run dist
 ```
 
+## HashLink support (optional runtime target)
+
+This project now includes a HashLink target alongside the Electron desktop app.
+It does not replace Electron or change installer generation; it adds a separate
+runtime path for Ares node-list parsing.
+
+### Requirements
+
+- [Haxe](https://haxe.org/download/) 4.x
+- [HashLink](https://hashlink.haxe.org/) runtime (`hl`)
+
+### Build the HashLink target
+
+```bash
+cd ares-ai-chat-desktop
+npm run build:hashlink
+```
+
+### Run the HashLink target
+
+```bash
+npm run run:hashlink -- /path/to/SNodes.dat
+```
+
+The program prints JSON containing parsed node entries (`host`, `port`,
+`reports`, `attempts`, `connects`, timestamps), matching the same `SNodes.dat`
+filtering behavior used by the Electron code.
+
 ## Download a prebuilt installer
 
 The latest Windows installer is available from GitHub Releases:
@@ -79,5 +107,6 @@ against `MSG_CLIENT_LOGIN_REQ` / `MSG_SUPERNODE_FIRST_LOG` in
   paper's worked example surfaced via `verifyD64()` rather than hidden
 - `ares-nodes.js` - parses SNodes.dat text format and the binary node
   candidate wire format
+- `hashlink/src/Main.hx` - HashLink companion target for parsing SNodes.dat
 - `index.html` - the UI and chat/network logic
 - `package.json` - dependencies and build config
