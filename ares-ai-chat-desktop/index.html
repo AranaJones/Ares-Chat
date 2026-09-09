@@ -60,6 +60,38 @@
     overflow-y: auto;
   }
 
+  .channel-join {
+    padding: 10px;
+    border-top: 1px solid #34495e;
+  }
+
+  .channel-join input,
+  .channel-join button {
+    width: 100%;
+    border: none;
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+  }
+
+  .channel-join input {
+    margin-bottom: 8px;
+    padding: 8px;
+  }
+
+  .channel-join button {
+    padding: 8px;
+    background: #3498db;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+
+  .channel-join button:hover {
+    background: #2980b9;
+  }
+
   .sidebar-footer {
     padding: 10px;
     border-top: 1px solid #34495e;
@@ -318,6 +350,10 @@
   <div class="sidebar">
     <div class="sidebar-header">Channels</div>
     <div id="channelList"></div>
+    <div class="channel-join">
+      <input type="text" id="joinChannelInput" placeholder="Join custom channel" autocomplete="off" />
+      <button id="joinChannelBtn">Join Channel</button>
+    </div>
     <div class="sidebar-footer">
       <button class="settings-btn" id="settingsBtn">⚙️ Settings</button>
     </div>
@@ -358,12 +394,15 @@
 </div>
 
 <script>
-  const channels = ['general', 'off-topic', 'gaming', 'music', 'tech', 'random'];
+  const defaultChannels = ['general', 'off-topic', 'gaming', 'music', 'tech', 'random'];
+  const channels = [];
   const chatlog = document.getElementById('chatlog');
   const input = document.getElementById('msgInput');
   const sendBtn = document.getElementById('sendBtn');
   const channelTitle = document.getElementById('channelTitle');
   const channelList = document.getElementById('channelList');
+  const joinChannelInput = document.getElementById('joinChannelInput');
+  const joinChannelBtn = document.getElementById('joinChannelBtn');
   const usernameDisplay = document.getElementById('usernameDisplay');
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsModal = document.getElementById('settingsModal');
@@ -371,47 +410,116 @@
   const saveBtn = document.getElementById('saveBtn');
   const cancelBtn = document.getElementById('cancelBtn');
 
-  let currentChannel = localStorage.getItem('ares_channel') || 'general';
+  let currentChannel = 'general';
   let username = localStorage.getItem('ares_username') || 'Guest';
   let chatHistory = {};
   let lastCommitHash = localStorage.getItem('ares_last_commit') || '';
 
-  // Initialize channels
-  channels.forEach(ch => {
-    const item = document.createElement('div');
-    item.className = `channel-item ${ch === currentChannel ? 'active' : ''}`;
-    item.textContent = '#' + ch;
-    item.onclick = (e) => switchChannel(ch, e);
-    channelList.appendChild(item);
-    
-    if (!chatHistory[ch]) {
-      chatHistory[ch] = [];
+  function escapeHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = value;
+    return div.innerHTML;
+  }
+
+  function normalizeChannelName(value) {
+    const rawValue = String(value || '').replace(/^#+/, '');
+    let decodedValue = rawValue;
+
+    try {
+      decodedValue = decodeURIComponent(rawValue);
+    } catch (error) {
+      decodedValue = rawValue;
     }
-  });
+
+    return decodedValue.trim();
+  }
+
+  function getChannelFromHash() {
+    return normalizeChannelName(window.location.hash.slice(1));
+  }
+
+  function createChannelItem(ch) {
+    const item = document.createElement('div');
+    item.className = 'channel-item';
+    item.dataset.channel = ch;
+    item.textContent = '#' + ch;
+    item.onclick = () => switchChannel(ch);
+    channelList.appendChild(item);
+  }
+
+  function ensureChannelExists(ch) {
+    if (!ch || channels.includes(ch)) return;
+
+    channels.push(ch);
+    createChannelItem(ch);
+  }
+
+  function updateActiveChannel() {
+    document.querySelectorAll('.channel-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.channel === currentChannel);
+    });
+  }
+
+  function renderChannel(defaultText) {
+    channelTitle.textContent = '#' + currentChannel;
+    chatlog.innerHTML = chatHistory[currentChannel] || `<div class="message system"><span class="message-text">${escapeHtml(defaultText)}</span></div>`;
+  }
+
+  function updateChannelHash(ch) {
+    const nextHash = '#' + encodeURIComponent(ch);
+
+    if (window.location.hash !== nextHash) {
+      window.location.hash = nextHash;
+    }
+  }
+
+  function switchChannel(ch, options = {}) {
+    const nextChannel = normalizeChannelName(ch);
+    if (!nextChannel) return;
+
+    if (currentChannel && currentChannel !== nextChannel) {
+      chatHistory[currentChannel] = chatlog.innerHTML;
+    }
+
+    ensureChannelExists(nextChannel);
+    currentChannel = nextChannel;
+    localStorage.setItem('ares_channel', nextChannel);
+
+    updateActiveChannel();
+    renderChannel(`Joined #${nextChannel}`);
+
+    if (options.updateHash !== false) {
+      updateChannelHash(nextChannel);
+    }
+
+    input.focus();
+  }
+
+  function joinChannel() {
+    const nextChannel = normalizeChannelName(joinChannelInput.value);
+    if (!nextChannel) return;
+
+    joinChannelInput.value = '';
+    switchChannel(nextChannel);
+  }
+
+  function handleHashChange() {
+    const hashChannel = getChannelFromHash();
+
+    if (hashChannel) {
+      switchChannel(hashChannel, { updateHash: false });
+    }
+  }
+
+  const initialHashChannel = getChannelFromHash();
+  currentChannel = initialHashChannel || normalizeChannelName(localStorage.getItem('ares_channel')) || 'general';
+
+  defaultChannels.forEach(ensureChannelExists);
+  ensureChannelExists(currentChannel);
+  localStorage.setItem('ares_channel', currentChannel);
 
   // Update username display
   usernameDisplay.textContent = username;
-
-  function switchChannel(ch, e) {
-    // Save current channel
-    chatHistory[currentChannel] = chatlog.innerHTML;
-    
-    // Switch channel
-    currentChannel = ch;
-    localStorage.setItem('ares_channel', ch);
-    
-    // Update UI
-    document.querySelectorAll('.channel-item').forEach(item => {
-      item.classList.remove('active');
-    });
-    if (e && e.currentTarget) {
-      e.currentTarget.classList.add('active');
-    }
-    
-    channelTitle.textContent = '#' + ch;
-    chatlog.innerHTML = chatHistory[ch] || `<div class="message system"><span class="message-text">Joined #${ch}</span></div>`;
-    input.focus();
-  }
 
   function timestamp() {
     const d = new Date();
@@ -421,7 +529,7 @@
   function addMessage(user, text, isUpdate = false) {
     const msg = document.createElement('div');
     msg.className = isUpdate ? 'message update' : 'message';
-    msg.innerHTML = `<span class="message-time">${timestamp()}</span><span class="message-user">${user}</span><div class="message-text">${text}</div>`;
+    msg.innerHTML = `<span class="message-time">${timestamp()}</span><span class="message-user">${escapeHtml(user)}</span><div class="message-text">${escapeHtml(text)}</div>`;
     chatlog.appendChild(msg);
     chatlog.scrollTop = chatlog.scrollHeight;
   }
@@ -477,18 +585,24 @@
     if (e.key === 'Enter') saveBtn.click();
   });
 
+  joinChannelBtn.addEventListener('click', joinChannel);
+  joinChannelInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') joinChannel();
+  });
   sendBtn.addEventListener('click', handleSend);
   input.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleSend();
   });
+  window.addEventListener('hashchange', handleHashChange);
 
   // Initialize
   channelTitle.textContent = '#' + currentChannel;
   if (chatHistory[currentChannel]) {
-    chatlog.innerHTML = chatHistory[currentChannel];
+    renderChannel(`Joined #${currentChannel}`);
   } else {
     addMessage('System', `Welcome to #${currentChannel}, ${username}!`);
   }
+  updateActiveChannel();
   input.focus();
 
   // Check for updates every 5 minutes
