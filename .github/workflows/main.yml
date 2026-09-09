@@ -3,7 +3,12 @@ name: Build Windows installer
 on:
   push:
     branches: [ main, master ]
+  release:
+    types: [ published ]
   workflow_dispatch: {}
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -24,10 +29,17 @@ jobs:
         run: npm install
 
       - name: Build installer
-        run: npm run dist
+        run: npm run dist:win -- --publish never
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
           name: ares-ai-chat-windows-installer
-          path: ares-ai-chat-desktop/dist/*.exe
+          path: ares-ai-chat-desktop/dist/Ares.AI.Chat.Setup.*.exe
+
+      - name: Publish installer to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ares-ai-chat-desktop/dist/Ares.AI.Chat.Setup.*.exe
+          fail_on_unmatched_files: true
