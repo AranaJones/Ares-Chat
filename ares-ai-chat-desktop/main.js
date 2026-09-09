@@ -56,7 +56,12 @@ function probeNode(host, port, timeoutMs = 5000) {
   });
 }
 
-ipcMain.handle('probe-node', async (event, { host, port }) => {
+ipcMain.handle('probe-node', async (event, payload = {}) => {
+  const host = typeof payload.host === 'string' ? payload.host.trim() : '';
+  const port = Number.parseInt(payload.port, 10);
+  if (!host || !Number.isInteger(port) || port < 1 || port > 65535) {
+    return { host, port: payload.port, alive: false, error: 'invalid-input' };
+  }
   return probeNode(host, port);
 });
 
@@ -67,9 +72,13 @@ ipcMain.handle('load-snodes-file', async () => {
     filters: [{ name: 'Ares node list', extensions: ['dat', 'txt'] }, { name: 'All files', extensions: ['*'] }]
   });
   if (result.canceled || !result.filePaths[0]) return null;
-  const text = fs.readFileSync(result.filePaths[0], 'utf8');
-  const nodes = parseSNodesText(text);
-  return { filePath: result.filePaths[0], nodes };
+  try {
+    const text = fs.readFileSync(result.filePaths[0], 'utf8');
+    const nodes = parseSNodesText(text);
+    return { filePath: result.filePaths[0], nodes };
+  } catch (err) {
+    return { filePath: result.filePaths[0], nodes: [], error: err.message || String(err) };
+  }
 });
 
 app.whenReady().then(() => {

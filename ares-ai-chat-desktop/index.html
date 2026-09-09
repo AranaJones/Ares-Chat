@@ -347,7 +347,7 @@
     <div class="modal-field">
       <label>Releases & Updates:</label>
       <div class="info-link">
-        <a href="https://github.com/AranaJones/Ares-AI/releases/tag/Ares" target="_blank">📦 Download Latest Release</a>
+        <a href="https://github.com/AranaJones/Ares-Chat/releases/latest" target="_blank" rel="noopener noreferrer">📦 Download Latest Release</a>
       </div>
     </div>
     <div class="modal-actions">
@@ -371,10 +371,35 @@
   const saveBtn = document.getElementById('saveBtn');
   const cancelBtn = document.getElementById('cancelBtn');
 
-  let currentChannel = localStorage.getItem('ares_channel') || 'general';
-  let username = localStorage.getItem('ares_username') || 'Guest';
+  const REPO_RELEASES_URL = 'https://github.com/AranaJones/Ares-Chat/releases/latest';
+  const REPO_COMMITS_API = 'https://api.github.com/repos/AranaJones/Ares-Chat/commits?per_page=1';
+
+  function getStoredValue(key, fallback) {
+    try {
+      const value = localStorage.getItem(key);
+      return value || fallback;
+    } catch (err) {
+      console.warn('localStorage read failed for key:', key, err);
+      return fallback;
+    }
+  }
+
+  function setStoredValue(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (err) {
+      console.warn('localStorage write failed for key:', key, err);
+    }
+  }
+
+  let currentChannel = getStoredValue('ares_channel', 'general');
+  let username = getStoredValue('ares_username', 'Guest');
   let chatHistory = {};
-  let lastCommitHash = localStorage.getItem('ares_last_commit') || '';
+  let lastCommitHash = getStoredValue('ares_last_commit', '');
+
+  if (!channels.includes(currentChannel)) {
+    currentChannel = 'general';
+  }
 
   // Initialize channels
   channels.forEach(ch => {
@@ -385,7 +410,7 @@
     channelList.appendChild(item);
     
     if (!chatHistory[ch]) {
-      chatHistory[ch] = [];
+      chatHistory[ch] = '';
     }
   });
 
@@ -398,7 +423,7 @@
     
     // Switch channel
     currentChannel = ch;
-    localStorage.setItem('ares_channel', ch);
+    setStoredValue('ares_channel', ch);
     
     // Update UI
     document.querySelectorAll('.channel-item').forEach(item => {
@@ -421,21 +446,39 @@
   function addMessage(user, text, isUpdate = false) {
     const msg = document.createElement('div');
     msg.className = isUpdate ? 'message update' : 'message';
-    msg.innerHTML = `<span class="message-time">${timestamp()}</span><span class="message-user">${user}</span><div class="message-text">${text}</div>`;
+
+    const timeEl = document.createElement('span');
+    timeEl.className = 'message-time';
+    timeEl.textContent = timestamp();
+
+    const userEl = document.createElement('span');
+    userEl.className = 'message-user';
+    userEl.textContent = user;
+
+    const textEl = document.createElement('div');
+    textEl.className = 'message-text';
+    textEl.textContent = text;
+
+    msg.appendChild(timeEl);
+    msg.appendChild(userEl);
+    msg.appendChild(textEl);
     chatlog.appendChild(msg);
     chatlog.scrollTop = chatlog.scrollHeight;
   }
 
   function checkForUpdates() {
-    fetch('https://api.github.com/repos/AranaJones/Ares-AI/commits?per_page=1')
-      .then(r => r.json())
+    fetch(REPO_COMMITS_API)
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(data => {
-        if (data.length > 0) {
+        if (Array.isArray(data) && data.length > 0 && data[0] && typeof data[0].sha === 'string') {
           const latestCommit = data[0].sha;
           if (lastCommitHash && latestCommit !== lastCommitHash) {
-            addMessage('System', `🔄 NEW VERSION AVAILABLE! Check GitHub for updates: https://github.com/AranaJones/Ares-AI/releases/tag/Ares`, true);
+            addMessage('System', `🔄 NEW VERSION AVAILABLE! Check GitHub for updates: ${REPO_RELEASES_URL}`, true);
           }
-          localStorage.setItem('ares_last_commit', latestCommit);
+          setStoredValue('ares_last_commit', latestCommit);
           lastCommitHash = latestCommit;
         }
       })
@@ -462,7 +505,7 @@
     const newUsername = usernameInput.value.trim();
     if (newUsername) {
       username = newUsername;
-      localStorage.setItem('ares_username', username);
+      setStoredValue('ares_username', username);
       usernameDisplay.textContent = username;
       addMessage('System', `${username} changed their username`);
     }
