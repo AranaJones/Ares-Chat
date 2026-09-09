@@ -68,6 +68,12 @@ against `MSG_CLIENT_LOGIN_REQ` / `MSG_SUPERNODE_FIRST_LOG` in
 
 - The Anthropic API key is stored in the app's local storage on your
   machine only.
+- Live channel list source is configurable in **Settings** via
+  **Ares channel feed URL**. Leave it blank to use built-in channels.
+- Feed JSON format can be either:
+  - `["general", "music", "tech"]`
+  - `{"channels":["general","music","tech"]}`
+  - Object entries with `name`, `channel`, or `title` are also supported.
 - Conversation history resets each time you restart the app.
 
 ## Project structure
