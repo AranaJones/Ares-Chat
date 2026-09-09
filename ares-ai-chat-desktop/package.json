@@ -4,7 +4,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "build:win": "electron-builder --win nsis"
   },
   "devDependencies": {
     "electron": "^28.0.0",
@@ -18,6 +19,11 @@
     ],
     "directories": {
       "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
     }
   }
 }
