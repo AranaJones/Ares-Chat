@@ -96,21 +96,47 @@
   .header {
     background: #2c3e50;
     color: white;
-    padding: 15px;
+    padding: 12px 15px;
     border-bottom: 1px solid #ddd;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .brand-logo {
+    width: clamp(22px, 2.2vw, 30px);
+    height: clamp(22px, 2.2vw, 30px);
+    max-width: 100%;
+    object-fit: contain;
+    flex: 0 0 auto;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25));
   }
 
   .header h2 {
     margin: 0;
-    font-size: 16px;
+    font-size: clamp(15px, 1.4vw, 16px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .header .username {
     font-size: 12px;
     color: #bdc3c7;
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
 
   .chatlog {
@@ -204,7 +230,6 @@
     background: #1f618d;
   }
 
-  /* Modal Styles */
   .modal-overlay {
     display: none;
     position: fixed;
@@ -325,7 +350,10 @@
 
   <div class="main">
     <div class="header">
-      <h2 id="channelTitle">#general</h2>
+      <div class="brand">
+        <img src="assets/ares-logo.png" alt="Ares Galaxy logo" class="brand-logo" />
+        <h2 id="channelTitle">#general</h2>
+      </div>
       <div class="username" id="usernameDisplay">Guest</div>
     </div>
     <div class="chatlog" id="chatlog"></div>
@@ -336,19 +364,12 @@
   </div>
 </div>
 
-<!-- Settings Modal -->
 <div class="modal-overlay" id="settingsModal">
   <div class="modal">
     <h3>Settings</h3>
     <div class="modal-field">
       <label for="usernameInput">Username:</label>
       <input type="text" id="usernameInput" placeholder="Enter your username" maxlength="20" />
-    </div>
-    <div class="modal-field">
-      <label>Releases & Updates:</label>
-      <div class="info-link">
-        <a href="https://github.com/AranaJones/Ares-AI/releases/tag/Ares" target="_blank">📦 Download Latest Release</a>
-      </div>
     </div>
     <div class="modal-actions">
       <button class="save" id="saveBtn">Save</button>
@@ -374,40 +395,31 @@
   let currentChannel = localStorage.getItem('ares_channel') || 'general';
   let username = localStorage.getItem('ares_username') || 'Guest';
   let chatHistory = {};
-  let lastCommitHash = localStorage.getItem('ares_last_commit') || '';
 
-  // Initialize channels
   channels.forEach(ch => {
     const item = document.createElement('div');
     item.className = `channel-item ${ch === currentChannel ? 'active' : ''}`;
     item.textContent = '#' + ch;
     item.onclick = (e) => switchChannel(ch, e);
     channelList.appendChild(item);
-    
+
     if (!chatHistory[ch]) {
       chatHistory[ch] = [];
     }
   });
 
-  // Update username display
   usernameDisplay.textContent = username;
 
   function switchChannel(ch, e) {
-    // Save current channel
     chatHistory[currentChannel] = chatlog.innerHTML;
-    
-    // Switch channel
     currentChannel = ch;
     localStorage.setItem('ares_channel', ch);
-    
-    // Update UI
     document.querySelectorAll('.channel-item').forEach(item => {
       item.classList.remove('active');
     });
     if (e && e.currentTarget) {
       e.currentTarget.classList.add('active');
     }
-    
     channelTitle.textContent = '#' + ch;
     chatlog.innerHTML = chatHistory[ch] || `<div class="message system"><span class="message-text">Joined #${ch}</span></div>`;
     input.focus();
@@ -426,32 +438,14 @@
     chatlog.scrollTop = chatlog.scrollHeight;
   }
 
-  function checkForUpdates() {
-    fetch('https://api.github.com/repos/AranaJones/Ares-AI/commits?per_page=1')
-      .then(r => r.json())
-      .then(data => {
-        if (data.length > 0) {
-          const latestCommit = data[0].sha;
-          if (lastCommitHash && latestCommit !== lastCommitHash) {
-            addMessage('System', `🔄 NEW VERSION AVAILABLE! Check GitHub for updates: https://github.com/AranaJones/Ares-AI/releases/tag/Ares`, true);
-          }
-          localStorage.setItem('ares_last_commit', latestCommit);
-          lastCommitHash = latestCommit;
-        }
-      })
-      .catch(err => console.log('Update check failed:', err));
-  }
-
   function handleSend() {
     const text = input.value.trim();
     if (!text) return;
-    
     addMessage(username, text);
     input.value = '';
     input.focus();
   }
 
-  // Settings Modal Handlers
   settingsBtn.addEventListener('click', () => {
     usernameInput.value = username;
     settingsModal.classList.add('show');
@@ -482,7 +476,6 @@
     if (e.key === 'Enter') handleSend();
   });
 
-  // Initialize
   channelTitle.textContent = '#' + currentChannel;
   if (chatHistory[currentChannel]) {
     chatlog.innerHTML = chatHistory[currentChannel];
@@ -490,10 +483,6 @@
     addMessage('System', `Welcome to #${currentChannel}, ${username}!`);
   }
   input.focus();
-
-  // Check for updates every 5 minutes
-  checkForUpdates();
-  setInterval(checkForUpdates, 5 * 60 * 1000);
 </script>
 
 </body>
