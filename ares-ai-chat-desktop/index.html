@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Ares Galaxy - AI Chatroom</title>
+<title>Ares Galaxy - Chatroom</title>
 <style>
   * { box-sizing: border-box; }
   html, body {
@@ -22,7 +22,7 @@
 
   .window {
     width: 100%;
-    max-width: 740px;
+    max-width: 900px;
     height: 100%;
     max-height: 580px;
     background: #ECE9D8;
@@ -63,36 +63,6 @@
   .menubar span { margin-right: 14px; cursor: default; }
   .menubar span.link { color: #0A246A; text-decoration: underline; cursor: pointer; }
 
-  .channelbar {
-    background: #ECE9D8;
-    border-bottom: 1px solid #ACA899;
-    padding: 4px 8px;
-    font-size: 11px;
-    color: #444;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-    overflow-x: auto;
-  }
-  .channel-tab {
-    padding: 4px 10px;
-    background: #d0ccc0;
-    border: 1px solid #999;
-    border-radius: 3px;
-    cursor: pointer;
-    white-space: nowrap;
-    font-weight: normal;
-  }
-  .channel-tab.active {
-    background: #fff;
-    border: 1px solid #0A246A;
-    font-weight: bold;
-  }
-  .channel-tab:hover {
-    background: #e8e4d8;
-  }
-
   .toolbar {
     background: #ECE9D8;
     border-bottom: 1px solid #ACA899;
@@ -119,11 +89,47 @@
     min-height: 0;
   }
 
+  .channellist {
+    width: 140px;
+    background: #ECE9D8;
+    border-right: 1px solid #ACA899;
+    border-bottom: 1px solid #ACA899;
+    overflow-y: auto;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  .channellist-header {
+    background: #D8D4C4;
+    padding: 4px 6px;
+    font-weight: bold;
+    border-bottom: 1px solid #ACA899;
+    font-size: 10px;
+    color: #333;
+  }
+  .channel-item {
+    padding: 5px 8px;
+    border-bottom: 1px solid #f0f0e8;
+    cursor: pointer;
+    color: #0A246A;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .channel-item:hover {
+    background: #ddd9cd;
+  }
+  .channel-item.active {
+    background: #fff;
+    font-weight: bold;
+    border-left: 3px solid #0A246A;
+    padding-left: 5px;
+  }
+
   .chatlog {
     flex: 1;
     background: #fff;
     border: 1px inset #999;
-    margin: 6px 0 6px 6px;
+    margin: 6px 6px 6px 0;
     padding: 6px 8px;
     overflow-y: auto;
     font-family: "Courier New", monospace;
@@ -141,7 +147,7 @@
   .typing { color: #888; font-style: italic; }
 
   .userlist {
-    width: 150px;
+    width: 140px;
     background: #fff;
     border: 1px inset #999;
     margin: 6px 6px 6px 0;
@@ -244,29 +250,38 @@
 
 <div class="window">
   <div class="titlebar">
-    <div class="left"><span class="icon"></span> Ares Galaxy - <span id="currentChannel">#ai-chat</span></div>
+    <div class="left"><span class="icon"></span> Ares Galaxy - <span id="currentChannel">#general</span></div>
   </div>
   <div class="menubar">
     <span>File</span><span>Search</span><span>Chat</span>
-    <span class="link" id="openSettings">Settings (API Key)</span>
-    <span class="link" id="openNetwork">Network (supernodes)</span><span>Help</span>
-  </div>
-  
-  <div class="channelbar" id="channelbar">
-    <!-- Channel tabs will be inserted here -->
+    <span class="link" id="openSettings">Settings</span>
+    <span class="link" id="openNetwork">Network</span><span>Help</span>
   </div>
 
   <div class="toolbar">
-    <span class="status-dot" id="statusDot"></span> <span id="statusText">Checking connection...</span>
-    <span class="peer-count" id="peerInfo">| Room: #ai-chat | Peers online: 1,204</span>
+    <span class="status-dot" id="statusDot"></span> <span id="statusText">Ready</span>
+    <span class="peer-count" id="peerInfo">| Peers online: 2,150</span>
   </div>
 
   <div class="main">
+    <div class="channellist">
+      <div class="channellist-header">CHANNELS</div>
+      <div id="channellistContainer"></div>
+    </div>
     <div class="chatlog" id="chatlog"></div>
     <div class="userlist">
-      <div class="userlist-header">Users (2)</div>
+      <div class="userlist-header">Users (12)</div>
       <div class="userlist-item"><span class="dot"></span>You</div>
-      <div class="userlist-item"><span class="dot"></span>AI_Helper</div>
+      <div class="userlist-item"><span class="dot"></span>Nexus_42</div>
+      <div class="userlist-item"><span class="dot"></span>Phoenix_Sky</div>
+      <div class="userlist-item"><span class="dot"></span>CodeMaster</div>
+      <div class="userlist-item"><span class="dot"></span>Luna_Echo</div>
+      <div class="userlist-item"><span class="dot"></span>Vortex</div>
+      <div class="userlist-item"><span class="dot"></span>NovaX</div>
+      <div class="userlist-item"><span class="dot"></span>Echo</div>
+      <div class="userlist-item"><span class="dot"></span>ZenMind</div>
+      <div class="userlist-item"><span class="dot"></span>Cipher</div>
+      <div class="userlist-item"><span class="dot"></span>Raven</div>
     </div>
   </div>
 
@@ -274,20 +289,18 @@
     <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off" />
     <button id="sendBtn">Send</button>
   </div>
-  <div class="statusbar">AI_Helper is an LLM-powered chat participant, running via the Anthropic API</div>
+  <div class="statusbar">Connected to Ares Galaxy Network</div>
 </div>
 
 <div class="modal-overlay" id="settingsOverlay">
   <div class="modal">
     <div class="titlebar"><div class="left"><span class="icon"></span> Settings</div></div>
     <div class="modal-body">
-      <p>Enter your Anthropic API key to enable AI_Helper. Get one at
-      <span style="text-decoration:underline;">console.anthropic.com</span>.
-      It's stored only on this device (localStorage), never sent anywhere except directly to Anthropic's API.</p>
-      <input type="text" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off" spellcheck="false" />
+      <p>User Settings for Ares Galaxy Chat</p>
+      <input type="text" id="usernameInput" placeholder="Username" autocomplete="off" spellcheck="false" />
       <div class="modal-actions">
-        <button id="saveKeyBtn">Save</button>
-        <button id="cancelKeyBtn">Cancel</button>
+        <button id="saveSettingsBtn">Save</button>
+        <button id="cancelSettingsBtn">Cancel</button>
       </div>
     </div>
   </div>
@@ -302,12 +315,12 @@
       log in or fetch chat rooms (that part of the protocol isn't confirmed
       yet). Paste <code>host:port</code> pairs (one per line) or load a real
       <code>SNodes.dat</code> from an existing Ares Galaxy install.</p>
-      <textarea id="nodeInput" rows="5" style="width:100%; font-family:'Courier New',monospace; font-size:11px; border:1px inset #999; padding:4px;" placeholder="203.0.113.10:2091&#10;203.0.113.1[...]
+      <textarea id="nodeInput" rows="5" style="width:100%; font-family:'Courier New',monospace; font-size:11px; border:1px inset #999; padding:4px;" placeholder="203.0.113.10:2091&#10;203.0.113.1[...]"></textarea>
       <div class="modal-actions" style="justify-content:flex-start; margin-top:8px;">
         <button id="loadSNodesBtn">Load SNodes.dat...</button>
         <button id="probeAllBtn">Probe all</button>
       </div>
-      <div id="probeResults" style="margin-top:10px; max-height:220px; overflow-y:auto; font-family:'Courier New',monospace; font-size:11px; background:#fff; border:1px inset #999; padding:4px;">[...]
+      <div id="probeResults" style="margin-top:10px; max-height:220px; overflow-y:auto; font-family:'Courier New',monospace; font-size:11px; background:#fff; border:1px inset #999; padding:4px;"></div>
       <div class="modal-actions" style="margin-top:10px;">
         <button id="closeNetworkBtn">Close</button>
       </div>
@@ -322,35 +335,38 @@
   const statusDot = document.getElementById('statusDot');
   const statusText = document.getElementById('statusText');
   const settingsOverlay = document.getElementById('settingsOverlay');
-  const apiKeyInput = document.getElementById('apiKeyInput');
-  const channelbar = document.getElementById('channelbar');
+  const usernameInput = document.getElementById('usernameInput');
+  const channellistContainer = document.getElementById('channellistContainer');
   const currentChannelDisplay = document.getElementById('currentChannel');
   const peerInfo = document.getElementById('peerInfo');
 
-  // Public channels
+  // Public channels (no AI channels)
   const PUBLIC_CHANNELS = [
-    { name: 'ai-chat', peers: 1204 },
     { name: 'general', peers: 2150 },
-    { name: 'tech-talk', peers: 890 },
-    { name: 'off-topic', peers: 1567 },
-    { name: 'programming', peers: 742 }
+    { name: 'off-topic', peers: 1890 },
+    { name: 'tech-talk', peers: 1340 },
+    { name: 'gaming', peers: 980 },
+    { name: 'music', peers: 756 },
+    { name: 'movies', peers: 654 },
+    { name: 'books', peers: 432 },
+    { name: 'politics', peers: 1205 },
+    { name: 'sports', peers: 1876 },
+    { name: 'random', peers: 2310 }
   ];
 
-  const STORAGE_KEY = 'ares_ai_chat_api_key';
-  const CURRENT_CHANNEL_KEY = 'ares_ai_current_channel';
-  let currentChannel = localStorage.getItem(CURRENT_CHANNEL_KEY) || 'ai-chat';
+  const CURRENT_CHANNEL_KEY = 'ares_current_channel';
+  let currentChannel = localStorage.getItem(CURRENT_CHANNEL_KEY) || 'general';
   let channelHistory = {}; // Store chat history per channel
   const history = [];
-  const SYSTEM_PROMPT = "You are AI_Helper, a friendly and helpful participant in an old-school P2P chatroom (styled after Ares Galaxy). Keep replies conversational and reasonably concise, like a chat room participant.";
 
   function initializeChannels() {
-    channelbar.innerHTML = '';
+    channellistContainer.innerHTML = '';
     PUBLIC_CHANNELS.forEach(channel => {
-      const tab = document.createElement('div');
-      tab.className = `channel-tab ${channel.name === currentChannel ? 'active' : ''}`;
-      tab.textContent = `#${channel.name}`;
-      tab.addEventListener('click', () => switchChannel(channel.name));
-      channelbar.appendChild(tab);
+      const item = document.createElement('div');
+      item.className = `channel-item ${channel.name === currentChannel ? 'active' : ''}`;
+      item.textContent = `#${channel.name}`;
+      item.addEventListener('click', () => switchChannel(channel.name));
+      channellistContainer.appendChild(item);
     });
     updateChannelDisplay();
   }
@@ -381,11 +397,11 @@
     chatlog.innerHTML = '';
     renderChannelHistory();
     
-    // Re-render channel tabs
-    document.querySelectorAll('.channel-tab').forEach(tab => {
-      tab.classList.remove('active');
-      if (tab.textContent === `#${currentChannel}`) {
-        tab.classList.add('active');
+    // Re-render channel list
+    document.querySelectorAll('.channel-item').forEach(item => {
+      item.classList.remove('active');
+      if (item.textContent === `#${currentChannel}`) {
+        item.classList.add('active');
       }
     });
   }
@@ -394,30 +410,22 @@
     currentChannelDisplay.textContent = `#${currentChannel}`;
     const channel = PUBLIC_CHANNELS.find(c => c.name === currentChannel);
     if (channel) {
-      peerInfo.textContent = `| Room: #${currentChannel} | Peers online: ${channel.peers.toLocaleString()}`;
+      peerInfo.textContent = `| Peers online: ${channel.peers.toLocaleString()}`;
     }
   }
 
   function renderChannelHistory() {
-    // Show join message for this channel
-    addSystemLine(`You have joined #${currentChannel}`);
-    addSystemLine('AI_Helper has joined the room');
     if (history.length === 0) {
-      addUserLine('AI_Helper', `hey, welcome to #${currentChannel}. ask me anything and I'll help out. (set your API key in Settings if you haven't yet)`, true);
-    }
-  }
-
-  function getApiKey() {
-    return localStorage.getItem(STORAGE_KEY) || '';
-  }
-
-  function refreshStatus() {
-    if (getApiKey()) {
-      statusDot.classList.remove('off');
-      statusText.textContent = 'Connected to network';
+      addSystemLine(`You have joined #${currentChannel}`);
     } else {
-      statusDot.classList.add('off');
-      statusText.textContent = 'No API key set - click Settings';
+      // Render existing history
+      history.forEach(msg => {
+        if (msg.role === 'user') {
+          addUserLine('You', msg.content, false);
+        } else if (msg.role === 'assistant') {
+          addUserLine('System', msg.content, true);
+        }
+      });
     }
   }
 
@@ -454,74 +462,18 @@
     );
   }
 
-  async function callClaude(userText) {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      throw new Error('no API key set - open Settings');
-    }
-
-    history.push({ role: 'user', content: userText });
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        system: SYSTEM_PROMPT,
-        messages: history
-      })
-    });
-
-    if (!response.ok) {
-      const errBody = await response.text().catch(() => '');
-      throw new Error('API error ' + response.status + (errBody ? ': ' + errBody.slice(0, 200) : ''));
-    }
-
-    const data = await response.json();
-    const textBlock = (data.content || []).find(b => b.type === 'text');
-    const replyText = textBlock ? textBlock.text : "(no response)";
-    history.push({ role: 'assistant', content: replyText });
-    return replyText;
-  }
-
   let sending = false;
 
   async function handleSend() {
     const text = input.value.trim();
     if (!text || sending) return;
 
-    if (!getApiKey()) {
-      addSystemLine('Set your API key in Settings before chatting with AI_Helper.');
-      settingsOverlay.classList.add('show');
-      return;
-    }
-
     sending = true;
     sendBtn.disabled = true;
     input.value = '';
 
     addUserLine('You', text, false);
-
-    const typingLine = appendLine('<span class="typing">AI_Helper is typing...</span>');
-
-    try {
-      const reply = await callClaude(text);
-      typingLine.remove();
-      addUserLine('AI_Helper', reply, true);
-    } catch (err) {
-      typingLine.remove();
-      addSystemLine('AI_Helper failed to respond (' + err.message + ')');
-    } finally {
-      sending = false;
-      sendBtn.disabled = false;
-      input.focus();
-    }
+    history.push({ role: 'user', content: text });
   }
 
   sendBtn.addEventListener('click', handleSend);
@@ -530,31 +482,19 @@
   });
 
   document.getElementById('openSettings').addEventListener('click', () => {
-    apiKeyInput.value = getApiKey();
     settingsOverlay.classList.add('show');
   });
-  document.getElementById('cancelKeyBtn').addEventListener('click', () => {
+  document.getElementById('cancelSettingsBtn').addEventListener('click', () => {
     settingsOverlay.classList.remove('show');
   });
-  document.getElementById('saveKeyBtn').addEventListener('click', () => {
-    const key = apiKeyInput.value.trim();
-    if (key) {
-      localStorage.setItem(STORAGE_KEY, key);
-      addSystemLine('API key saved.');
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-      addSystemLine('API key cleared.');
-    }
-    refreshStatus();
+  document.getElementById('saveSettingsBtn').addEventListener('click', () => {
     settingsOverlay.classList.remove('show');
   });
 
-  refreshStatus();
+  statusDot.classList.remove('off');
+  statusText.textContent = 'Connected to network';
   initializeChannels();
   renderChannelHistory();
-  if (!getApiKey()) {
-    setTimeout(() => settingsOverlay.classList.add('show'), 300);
-  }
 
   // --- Network / supernode probe panel ---
   const networkOverlay = document.getElementById('networkOverlay');
