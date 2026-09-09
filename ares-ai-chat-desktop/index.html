@@ -97,6 +97,13 @@
     background: #ecf0f1;
   }
 
+  .message.update {
+    border-left-color: #27ae60;
+    color: #27ae60;
+    background: #d5f4e6;
+    font-weight: bold;
+  }
+
   .message-user {
     font-weight: bold;
     color: #2c3e50;
@@ -111,6 +118,10 @@
   .message-text {
     color: #333;
     word-wrap: break-word;
+  }
+
+  .message.update .message-text {
+    color: inherit;
   }
 
   .inputbar {
@@ -186,6 +197,7 @@
 
   let currentChannel = localStorage.getItem('ares_channel') || 'general';
   let chatHistory = {};
+  let lastCommitHash = localStorage.getItem('ares_last_commit') || '';
 
   // Initialize channels
   channels.forEach(ch => {
@@ -224,12 +236,28 @@
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
-  function addMessage(username, text) {
+  function addMessage(username, text, isUpdate = false) {
     const msg = document.createElement('div');
-    msg.className = 'message';
+    msg.className = isUpdate ? 'message update' : 'message';
     msg.innerHTML = `<span class="message-time">${timestamp()}</span><span class="message-user">${username}</span><div class="message-text">${text}</div>`;
     chatlog.appendChild(msg);
     chatlog.scrollTop = chatlog.scrollHeight;
+  }
+
+  function checkForUpdates() {
+    fetch('https://api.github.com/repos/AranaJones/Ares-AI/commits?per_page=1')
+      .then(r => r.json())
+      .then(data => {
+        if (data.length > 0) {
+          const latestCommit = data[0].sha;
+          if (lastCommitHash && latestCommit !== lastCommitHash) {
+            addMessage('System', `🔄 NEW VERSION AVAILABLE! Check GitHub for updates: https://github.com/AranaJones/Ares-AI`, true);
+          }
+          localStorage.setItem('ares_last_commit', latestCommit);
+          lastCommitHash = latestCommit;
+        }
+      })
+      .catch(err => console.log('Update check failed:', err));
   }
 
   function handleSend() {
@@ -254,6 +282,10 @@
     addMessage('System', `Welcome to #${currentChannel}!`);
   }
   input.focus();
+
+  // Check for updates every 5 minutes
+  checkForUpdates();
+  setInterval(checkForUpdates, 5 * 60 * 1000);
 </script>
 
 </body>
