@@ -70,6 +70,8 @@ against `MSG_CLIENT_LOGIN_REQ` / `MSG_SUPERNODE_FIRST_LOG` in
 
 - The Anthropic API key is stored in the app's local storage on your
   machine only.
+- Username and username color settings are also stored in the app's local
+  storage on your machine only.
 - Conversation history resets each time you restart the app.
 
 ## Project structure
