@@ -516,7 +516,7 @@
   .color-preview-name {
     font-size: 14px;
     font-weight: bold;
-    color: var(--ares-preview-color, var(--ares-username-color));
+    color: var(--ares-username-color);
     text-shadow: 0 0 1px rgba(255,255,255,0.45), 0 0 1px rgba(0,0,0,0.35);
   }
 
@@ -950,9 +950,10 @@
   function syncUsernameColorPreview() {
     const previewName = usernameInput.value.trim() || username || 'Guest';
     const previewColor = pendingUsernameColor || DEFAULT_USERNAME_COLOR;
-    document.documentElement.style.setProperty('--ares-preview-color', previewColor);
     colorPreviewLight.textContent = previewName;
     colorPreviewDark.textContent = previewName;
+    colorPreviewLight.style.color = previewColor;
+    colorPreviewDark.style.color = previewColor;
     usernameColorInput.classList.toggle('invalid', Boolean(usernameColorInput.value.trim()) && !normalizeHexColor(usernameColorInput.value));
     usernameColorPalette.querySelectorAll('.color-swatch').forEach((swatch) => {
       swatch.classList.toggle('selected', swatch.dataset.color === previewColor);
@@ -1240,7 +1241,11 @@
     syncUsernameColorPreview();
   });
   usernameColorInput.addEventListener('blur', () => {
-    usernameColorInput.value = pendingUsernameColor || DEFAULT_USERNAME_COLOR;
+    const normalizedColor = normalizeHexColor(usernameColorInput.value);
+    if (normalizedColor) {
+      usernameColorInput.value = normalizedColor;
+      pendingUsernameColor = normalizedColor;
+    }
     syncUsernameColorPreview();
   });
   resetColorBtn.addEventListener('click', () => {
