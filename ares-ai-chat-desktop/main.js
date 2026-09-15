@@ -127,9 +127,7 @@ function querySupernodeRooms(host, port, timeoutMs = 6500) {
     socket.setTimeout(timeoutMs);
     socket.once('connect', () => {
       const plainRequest = Buffer.from('LIST_ROOMS\n', 'utf8');
-      const encryptedRequest = d64(Buffer.from(plainRequest), 24884);
-      socket.write(plainRequest);
-      socket.write(encryptedRequest);
+      socket.write(d64(Buffer.from(plainRequest), 24884));
     });
 
     socket.on('data', (chunk) => {

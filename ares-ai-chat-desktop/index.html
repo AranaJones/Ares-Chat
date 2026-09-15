@@ -593,7 +593,22 @@
   function parseNodeLine(rawLine) {
     const line = String(rawLine || '').trim();
     if (!line) return null;
-    const [host, portText] = line.split(':');
+
+    let host = '';
+    let portText = '';
+    if (line.startsWith('[')) {
+      const end = line.lastIndexOf(']');
+      if (end < 0) return null;
+      host = line.slice(1, end).trim();
+      if (line[end + 1] !== ':') return null;
+      portText = line.slice(end + 2).trim();
+    } else {
+      const splitIndex = line.lastIndexOf(':');
+      if (splitIndex < 0) return null;
+      host = line.slice(0, splitIndex).trim();
+      portText = line.slice(splitIndex + 1).trim();
+    }
+
     const port = parseInt(portText, 10);
     if (!host || !Number.isInteger(port) || port < 1 || port > 65535) return null;
     return { host: host.trim(), port };
@@ -653,7 +668,17 @@
       meta.className = 'room-meta';
       const users = room.userCount != null ? `${room.userCount} users` : 'users unknown';
       const desc = room.description || room.category || 'no description';
-      meta.innerHTML = `<span>${users}</span><span>${desc}</span><span>${room.host}:${room.port}</span><span>${room.latencyMs != null ? room.latencyMs + 'ms' : 'n/a latency'}</span>`;
+      const metaParts = [
+        users,
+        desc,
+        `${room.host}:${room.port}`,
+        room.latencyMs != null ? `${room.latencyMs}ms` : 'n/a latency'
+      ];
+      for (const part of metaParts) {
+        const span = document.createElement('span');
+        span.textContent = part;
+        meta.appendChild(span);
+      }
 
       const actions = document.createElement('div');
       actions.className = 'room-actions';
