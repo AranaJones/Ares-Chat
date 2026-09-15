@@ -1001,6 +1001,12 @@
   function addSystemMessage(text, highlightedText = '') {
     const msg = document.createElement('div');
     msg.className = 'message system';
+
+    const timeEl = document.createElement('span');
+    timeEl.className = 'message-time';
+    timeEl.textContent = timestamp();
+    msg.appendChild(timeEl);
+
     const textEl = document.createElement('div');
     textEl.className = 'message-text';
     appendHighlightedText(textEl, text, highlightedText);
@@ -1207,6 +1213,7 @@
   });
 
   saveBtn.addEventListener('click', () => {
+    const previousUsername = username;
     const newUsername = usernameInput.value.trim();
     const typedUsernameColor = usernameColorInput.value.trim();
     const normalizedTypedColor = normalizeHexColor(typedUsernameColor);
@@ -1226,7 +1233,7 @@
       username = newUsername;
       localStorage.setItem('ares_username', username);
       usernameDisplay.textContent = username;
-      addSystemMessage(`${username} changed their username`, username);
+      addSystemMessage(`${previousUsername} changed their username`, previousUsername);
     }
     settingsModal.classList.remove('show');
   });
