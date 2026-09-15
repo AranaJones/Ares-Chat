@@ -901,6 +901,7 @@
     } else {
       chatlog.innerHTML = '';
       addSystemMessage(`Joined #${ch}`);
+      chatHistory[ch] = chatlog.innerHTML;
     }
     setView('channel');
     input.focus();
@@ -924,6 +925,12 @@
 
   function applyUsernameColor(color) {
     document.documentElement.style.setProperty('--ares-username-color', color || DEFAULT_USERNAME_COLOR);
+  }
+
+  function escapeHtml(value) {
+    const safeValue = document.createElement('span');
+    safeValue.textContent = String(value || '');
+    return safeValue.innerHTML;
   }
 
   function renderUsernameColorPalette() {
@@ -1018,7 +1025,7 @@
 
     const textEl = document.createElement('div');
     textEl.className = 'message-text';
-    textEl.textContent = text;
+    textEl.innerHTML = text;
     msg.appendChild(textEl);
 
     chatlog.appendChild(msg);
@@ -1028,7 +1035,7 @@
   function handleSend() {
     const text = input.value.trim();
     if (!text) return;
-    addMessage(username, text);
+    addMessage(username, escapeHtml(text));
     input.value = '';
     input.focus();
   }
