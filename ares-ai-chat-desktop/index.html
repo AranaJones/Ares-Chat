@@ -728,9 +728,6 @@
     item.onclick = (e) => switchChannel(ch, e);
     channelList.appendChild(item);
 
-    if (!chatHistory[ch]) {
-      chatHistory[ch] = '';
-    }
   });
 
   usernameDisplay.textContent = username;
@@ -899,7 +896,7 @@
     document.querySelectorAll('.channel-item[data-channel]').forEach(item => item.classList.remove('active'));
     if (e && e.currentTarget) e.currentTarget.classList.add('active');
     channelTitle.textContent = '#' + ch;
-    if (chatHistory[ch]) {
+    if (typeof chatHistory[ch] === 'string') {
       chatlog.innerHTML = chatHistory[ch];
     } else {
       chatlog.innerHTML = '';
@@ -970,22 +967,26 @@
       return;
     }
 
-    const start = safeText.indexOf(highlight);
-    if (start < 0) {
+    if (!safeText.includes(highlight)) {
       container.textContent = safeText;
       return;
     }
 
-    const end = start + highlight.length;
-    if (start > 0) {
-      container.appendChild(document.createTextNode(safeText.slice(0, start)));
-    }
-    const ref = document.createElement('span');
-    ref.className = 'system-user-ref';
-    ref.textContent = highlight;
-    container.appendChild(ref);
-    if (end < safeText.length) {
-      container.appendChild(document.createTextNode(safeText.slice(end)));
+    let cursor = 0;
+    while (cursor < safeText.length) {
+      const start = safeText.indexOf(highlight, cursor);
+      if (start < 0) {
+        container.appendChild(document.createTextNode(safeText.slice(cursor)));
+        break;
+      }
+      if (start > cursor) {
+        container.appendChild(document.createTextNode(safeText.slice(cursor, start)));
+      }
+      const ref = document.createElement('span');
+      ref.className = 'system-user-ref';
+      ref.textContent = highlight;
+      container.appendChild(ref);
+      cursor = start + highlight.length;
     }
   }
 
@@ -1199,7 +1200,14 @@
 
   saveBtn.addEventListener('click', () => {
     const newUsername = usernameInput.value.trim();
-    const nextUsernameColor = normalizeHexColor(usernameColorInput.value) || pendingUsernameColor || DEFAULT_USERNAME_COLOR;
+    const typedUsernameColor = usernameColorInput.value.trim();
+    const normalizedTypedColor = normalizeHexColor(typedUsernameColor);
+    if (typedUsernameColor && !normalizedTypedColor) {
+      usernameColorInput.classList.add('invalid');
+      usernameColorInput.focus();
+      return;
+    }
+    const nextUsernameColor = normalizedTypedColor || pendingUsernameColor || DEFAULT_USERNAME_COLOR;
 
     usernameColor = nextUsernameColor;
     pendingUsernameColor = nextUsernameColor;
@@ -1248,7 +1256,7 @@
   });
 
   channelTitle.textContent = '#' + currentChannel;
-  if (chatHistory[currentChannel]) {
+  if (typeof chatHistory[currentChannel] === 'string') {
     chatlog.innerHTML = chatHistory[currentChannel];
   } else {
     addSystemMessage(`Welcome to #${currentChannel}, ${username}!`, username);
