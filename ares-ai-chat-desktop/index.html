@@ -21,7 +21,7 @@
   }
 
   .sidebar {
-    width: 150px;
+    width: 170px;
     background: #2c3e50;
     color: white;
     border-radius: 5px;
@@ -36,6 +36,10 @@
     font-weight: bold;
     border-bottom: 1px solid #34495e;
     margin-bottom: 5px;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.6px;
+    color: #bdc3c7;
   }
 
   .channel-item {
@@ -53,6 +57,18 @@
     background: #3498db;
     border-left-color: #fff;
     font-weight: bold;
+  }
+
+  .channel-item.browse {
+    background: linear-gradient(180deg, #47335f, #2f2748);
+    border-top: 1px solid rgba(255,255,255,0.12);
+    border-bottom: 1px solid rgba(0,0,0,0.35);
+    color: #f5d7ff;
+  }
+
+  .channel-item.browse.active {
+    background: linear-gradient(180deg, #7d44ba, #5a2d8a);
+    color: #fff;
   }
 
   #channelList {
@@ -137,6 +153,13 @@
     color: #bdc3c7;
     white-space: nowrap;
     flex: 0 0 auto;
+  }
+
+  .chat-panel {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .chatlog {
@@ -230,6 +253,143 @@
     background: #1f618d;
   }
 
+  .browse-panel {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    background: radial-gradient(circle at top, #15182c, #080b18);
+    color: #daf2ff;
+    padding: 14px;
+    overflow: auto;
+  }
+
+  .browse-panel.active {
+    display: block;
+  }
+
+  .browse-controls {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 12px;
+    background: rgba(17, 23, 43, 0.9);
+    border: 1px solid #41507d;
+    border-radius: 4px;
+    padding: 10px;
+  }
+
+  .browse-controls label {
+    font-size: 12px;
+    color: #9ab7ff;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .browse-controls textarea {
+    width: 100%;
+    min-height: 80px;
+    resize: vertical;
+    border: 1px solid #3e5aa3;
+    border-radius: 3px;
+    background: #070d24;
+    color: #d8ecff;
+    padding: 8px;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+  }
+
+  .browse-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .browse-btn {
+    border: 1px solid #93b1ff;
+    background: linear-gradient(180deg, #4262b8, #253f84);
+    color: #fff;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 7px 10px;
+    cursor: pointer;
+  }
+
+  .browse-btn.alt {
+    border-color: #bd9dff;
+    background: linear-gradient(180deg, #7952c9, #56319d);
+  }
+
+  .browse-btn:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
+
+  .browse-status {
+    font-size: 12px;
+    color: #c7d8ff;
+    margin-bottom: 10px;
+  }
+
+  .room-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .room-card {
+    background: rgba(18, 26, 48, 0.94);
+    border: 1px solid #35558c;
+    border-radius: 4px;
+    padding: 10px;
+    display: grid;
+    gap: 6px;
+  }
+
+  .room-card h4 {
+    margin: 0;
+    font-size: 14px;
+    color: #d9ecff;
+  }
+
+  .room-meta {
+    font-size: 12px;
+    color: #a7bfe8;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .room-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .room-actions button {
+    border: 1px solid #5ba2ff;
+    border-radius: 3px;
+    background: #0b58a5;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+
+  .room-actions button.copy {
+    border-color: #8ca5dd;
+    background: #2f4473;
+  }
+
+  .room-error {
+    border-left: 3px solid #e74c3c;
+    background: rgba(255, 90, 90, 0.12);
+    color: #ffd0d0;
+    font-size: 12px;
+    padding: 8px;
+    border-radius: 3px;
+  }
+
   .modal-overlay {
     display: none;
     position: fixed;
@@ -289,20 +449,6 @@
     box-shadow: 0 0 3px rgba(52, 152, 219, 0.3);
   }
 
-  .modal-field .info-link {
-    font-size: 11px;
-    color: #3498db;
-  }
-
-  .modal-field .info-link a {
-    color: #3498db;
-    text-decoration: none;
-  }
-
-  .modal-field .info-link a:hover {
-    text-decoration: underline;
-  }
-
   .modal-actions {
     display: flex;
     gap: 8px;
@@ -343,6 +489,8 @@
   <div class="sidebar">
     <div class="sidebar-header">Channels</div>
     <div id="channelList"></div>
+    <div class="sidebar-header">Ares Galaxy</div>
+    <div class="channel-item browse" id="browseRoomsTab">🛰 Browse Rooms</div>
     <div class="sidebar-footer">
       <button class="settings-btn" id="settingsBtn">⚙️ Settings</button>
     </div>
@@ -356,10 +504,26 @@
       </div>
       <div class="username" id="usernameDisplay">Guest</div>
     </div>
-    <div class="chatlog" id="chatlog"></div>
-    <div class="inputbar">
-      <input type="text" id="msgInput" placeholder="Say something..." autocomplete="off" />
-      <button id="sendBtn">Send</button>
+
+    <div id="chatPanel" class="chat-panel">
+      <div class="chatlog" id="chatlog"></div>
+      <div class="inputbar" id="chatInputBar">
+        <input type="text" id="msgInput" placeholder="Say something..." autocomplete="off" />
+        <button id="sendBtn">Send</button>
+      </div>
+    </div>
+
+    <div class="browse-panel" id="browsePanel">
+      <div class="browse-controls">
+        <label for="supernodeInput">Supernodes (one host:port per line)</label>
+        <textarea id="supernodeInput" placeholder="67.21.12.10:54321&#10;67.21.12.11:54321"></textarea>
+        <div class="browse-actions">
+          <button class="browse-btn" id="loadNodesBtn">Load SNodes.dat</button>
+          <button class="browse-btn alt" id="refreshRoomsBtn">Refresh room listings</button>
+        </div>
+      </div>
+      <div class="browse-status" id="browseStatus">Add supernodes, then refresh to fetch live room listings.</div>
+      <div class="room-list" id="roomList"></div>
     </div>
   </div>
 </div>
@@ -391,15 +555,31 @@
   const usernameInput = document.getElementById('usernameInput');
   const saveBtn = document.getElementById('saveBtn');
   const cancelBtn = document.getElementById('cancelBtn');
+  const browseRoomsTab = document.getElementById('browseRoomsTab');
+  const browsePanel = document.getElementById('browsePanel');
+  const chatPanel = document.getElementById('chatPanel');
+  const roomList = document.getElementById('roomList');
+  const browseStatus = document.getElementById('browseStatus');
+  const supernodeInput = document.getElementById('supernodeInput');
+  const loadNodesBtn = document.getElementById('loadNodesBtn');
+  const refreshRoomsBtn = document.getElementById('refreshRoomsBtn');
+
+  const ROOM_CACHE_TTL_MS = 30 * 1000;
 
   let currentChannel = localStorage.getItem('ares_channel') || 'general';
   let username = localStorage.getItem('ares_username') || 'Guest';
   let chatHistory = {};
+  let currentView = 'channel';
+  let isLoadingRooms = false;
+  let discoveredRooms = [];
+  let nodeErrors = [];
+  const roomStateByNode = new Map();
 
   channels.forEach(ch => {
     const item = document.createElement('div');
     item.className = `channel-item ${ch === currentChannel ? 'active' : ''}`;
     item.textContent = '#' + ch;
+    item.dataset.channel = ch;
     item.onclick = (e) => switchChannel(ch, e);
     channelList.appendChild(item);
 
@@ -410,18 +590,170 @@
 
   usernameDisplay.textContent = username;
 
+  function parseNodeLine(rawLine) {
+    const line = String(rawLine || '').trim();
+    if (!line) return null;
+
+    let host = '';
+    let portText = '';
+    if (line.startsWith('[')) {
+      const end = line.lastIndexOf(']');
+      if (end < 0) return null;
+      host = line.slice(1, end).trim();
+      if (line[end + 1] !== ':') return null;
+      portText = line.slice(end + 2).trim();
+    } else {
+      const splitIndex = line.lastIndexOf(':');
+      if (splitIndex < 0) return null;
+      host = line.slice(0, splitIndex).trim();
+      portText = line.slice(splitIndex + 1).trim();
+    }
+
+    const port = parseInt(portText, 10);
+    if (!host || !Number.isInteger(port) || port < 1 || port > 65535) return null;
+    return { host: host.trim(), port };
+  }
+
+  function getConfiguredNodes() {
+    const lines = supernodeInput.value.split(/\r?\n/);
+    const map = new Map();
+    for (const rawLine of lines) {
+      const node = parseNodeLine(rawLine);
+      if (!node) continue;
+      map.set(`${node.host}:${node.port}`, node);
+    }
+    return Array.from(map.values());
+  }
+
+  function setRoomBrowseLoading(loading) {
+    isLoadingRooms = loading;
+    refreshRoomsBtn.disabled = loading;
+    loadNodesBtn.disabled = loading;
+    refreshRoomsBtn.textContent = loading ? 'Querying supernodes…' : 'Refresh room listings';
+  }
+
+  function renderRoomCards() {
+    roomList.innerHTML = '';
+
+    if (nodeErrors.length) {
+      for (const err of nodeErrors) {
+        const errorEl = document.createElement('div');
+        errorEl.className = 'room-error';
+        errorEl.textContent = `${err.node} — ${err.error}`;
+        roomList.appendChild(errorEl);
+      }
+    }
+
+    if (!discoveredRooms.length) {
+      if (!nodeErrors.length && !isLoadingRooms) {
+        const empty = document.createElement('div');
+        empty.className = 'room-error';
+        empty.style.borderLeftColor = '#5ba2ff';
+        empty.style.color = '#d5e5ff';
+        empty.style.background = 'rgba(91, 162, 255, 0.14)';
+        empty.textContent = 'No rooms discovered yet. Try different supernodes or refresh again.';
+        roomList.appendChild(empty);
+      }
+      return;
+    }
+
+    for (const room of discoveredRooms) {
+      const card = document.createElement('div');
+      card.className = 'room-card';
+
+      const title = document.createElement('h4');
+      title.textContent = room.roomId;
+
+      const meta = document.createElement('div');
+      meta.className = 'room-meta';
+      const users = room.userCount != null ? `${room.userCount} users` : 'users unknown';
+      const desc = room.description || room.category || 'no description';
+      const metaParts = [
+        users,
+        desc,
+        `${room.host}:${room.port}`,
+        room.latencyMs != null ? `${room.latencyMs}ms` : 'n/a latency'
+      ];
+      for (const part of metaParts) {
+        const span = document.createElement('span');
+        span.textContent = part;
+        meta.appendChild(span);
+      }
+
+      const actions = document.createElement('div');
+      actions.className = 'room-actions';
+      const joinButton = document.createElement('button');
+      joinButton.textContent = 'Join';
+      joinButton.onclick = () => joinDiscoveredRoom(room);
+
+      const copyButton = document.createElement('button');
+      copyButton.className = 'copy';
+      copyButton.textContent = 'Copy address';
+      copyButton.onclick = () => copyRoomAddress(room);
+
+      actions.appendChild(joinButton);
+      actions.appendChild(copyButton);
+
+      card.appendChild(title);
+      card.appendChild(meta);
+      card.appendChild(actions);
+      roomList.appendChild(card);
+    }
+  }
+
+  function setBrowseStatus() {
+    if (isLoadingRooms) {
+      browseStatus.textContent = 'Querying supernodes for live room directories...';
+      return;
+    }
+    if (discoveredRooms.length) {
+      browseStatus.textContent = `Discovered ${discoveredRooms.length} rooms. Updated ${new Date().toLocaleTimeString()}.`;
+      return;
+    }
+    if (nodeErrors.length) {
+      browseStatus.textContent = 'Some supernodes returned errors. See details below.';
+      return;
+    }
+    browseStatus.textContent = 'Add supernodes, then refresh to fetch live room listings.';
+  }
+
+  function setView(view) {
+    currentView = view;
+    const isBrowse = view === 'browse';
+    browseRoomsTab.classList.toggle('active', isBrowse);
+    browsePanel.classList.toggle('active', isBrowse);
+    chatPanel.style.display = isBrowse ? 'none' : 'flex';
+    if (isBrowse) {
+      channelTitle.textContent = 'Browse Rooms';
+      setBrowseStatus();
+      renderRoomCards();
+    } else {
+      channelTitle.textContent = '#' + currentChannel;
+      input.focus();
+    }
+  }
+
+  function ensureChannelVisible(ch) {
+    if (channelList.querySelector(`[data-channel="${CSS.escape(ch)}"]`)) return;
+    const item = document.createElement('div');
+    item.className = 'channel-item';
+    item.textContent = '#' + ch;
+    item.dataset.channel = ch;
+    item.onclick = (e) => switchChannel(ch, e);
+    channelList.appendChild(item);
+  }
+
   function switchChannel(ch, e) {
-    chatHistory[currentChannel] = chatlog.innerHTML;
+    if (currentView !== 'browse') {
+      chatHistory[currentChannel] = chatlog.innerHTML;
+    }
     currentChannel = ch;
     localStorage.setItem('ares_channel', ch);
-    document.querySelectorAll('.channel-item').forEach(item => {
-      item.classList.remove('active');
-    });
-    if (e && e.currentTarget) {
-      e.currentTarget.classList.add('active');
-    }
+    document.querySelectorAll('.channel-item[data-channel]').forEach(item => item.classList.remove('active'));
+    if (e && e.currentTarget) e.currentTarget.classList.add('active');
     channelTitle.textContent = '#' + ch;
     chatlog.innerHTML = chatHistory[ch] || `<div class="message system"><span class="message-text">Joined #${ch}</span></div>`;
+    setView('channel');
     input.focus();
   }
 
@@ -445,6 +777,163 @@
     input.value = '';
     input.focus();
   }
+
+  function joinDiscoveredRoom(room) {
+    const channelName = room.roomId.replace(/^#/, '').trim() || 'room';
+    if (!chatHistory[channelName]) chatHistory[channelName] = '';
+    ensureChannelVisible(channelName);
+    const channelEl = channelList.querySelector(`[data-channel="${CSS.escape(channelName)}"]`);
+    switchChannel(channelName, { currentTarget: channelEl });
+    addMessage('System', `Joined live room #${channelName} via ${room.host}:${room.port}`, true);
+  }
+
+  async function copyRoomAddress(room) {
+    const text = `${room.host}:${room.port}/${room.roomId}`;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const helper = document.createElement('textarea');
+        helper.value = text;
+        helper.style.position = 'fixed';
+        helper.style.left = '-1000px';
+        document.body.appendChild(helper);
+        helper.focus();
+        helper.select();
+        const copied = document.execCommand('copy');
+        document.body.removeChild(helper);
+        if (!copied) throw new Error('copy command rejected');
+      }
+      browseStatus.textContent = `Copied ${text}`;
+    } catch (err) {
+      browseStatus.textContent = `Copy failed: ${err.message || 'clipboard unavailable'}`;
+    }
+  }
+
+  function normalizeResults(results) {
+    const roomById = new Map();
+    const errors = [];
+    for (const result of results || []) {
+      const nodeLabel = `${result.host}:${result.port}`;
+      roomStateByNode.set(nodeLabel, { timestamp: Date.now(), result });
+      if (!result.ok) {
+        errors.push({ node: nodeLabel, error: result.error || 'unknown error' });
+        continue;
+      }
+      for (const room of result.rooms || []) {
+        const normalized = {
+          host: result.host,
+          port: result.port,
+          latencyMs: result.latencyMs,
+          roomId: room.roomId,
+          userCount: room.userCount,
+          description: room.description,
+          category: room.category,
+          fetchedAt: Date.now()
+        };
+
+        const key = String(room.roomId || '').toLowerCase();
+        const existing = roomById.get(key);
+        if (!existing) {
+          roomById.set(key, normalized);
+          continue;
+        }
+        const merged = {
+          ...existing,
+          host: existing.host || normalized.host,
+          port: existing.port || normalized.port,
+          latencyMs: Math.min(
+            Number.isFinite(existing.latencyMs) ? existing.latencyMs : Number.POSITIVE_INFINITY,
+            Number.isFinite(normalized.latencyMs) ? normalized.latencyMs : Number.POSITIVE_INFINITY
+          ),
+          userCount: normalized.userCount != null ? normalized.userCount : existing.userCount,
+          description: existing.description || normalized.description,
+          category: existing.category || normalized.category,
+          fetchedAt: Math.max(existing.fetchedAt || 0, normalized.fetchedAt || 0)
+        };
+        if (!Number.isFinite(merged.latencyMs)) merged.latencyMs = null;
+        roomById.set(key, merged);
+      }
+    }
+
+    discoveredRooms = Array.from(roomById.values());
+    nodeErrors = errors;
+  }
+
+  async function refreshRoomListings(forceRefresh = false) {
+    if (!window.aresNet || typeof window.aresNet.queryRoomDirectory !== 'function') {
+      nodeErrors = [{ node: 'local', error: 'room directory handler unavailable' }];
+      discoveredRooms = [];
+      setBrowseStatus();
+      renderRoomCards();
+      return;
+    }
+
+    const nodes = getConfiguredNodes();
+    if (!nodes.length) {
+      nodeErrors = [{ node: 'input', error: 'no valid host:port entries provided' }];
+      discoveredRooms = [];
+      setBrowseStatus();
+      renderRoomCards();
+      return;
+    }
+
+    const now = Date.now();
+    const cachedResults = [];
+    const nodesToFetch = [];
+
+    for (const node of nodes) {
+      const key = `${node.host}:${node.port}`;
+      const cached = roomStateByNode.get(key);
+      if (!forceRefresh && cached && now - cached.timestamp < ROOM_CACHE_TTL_MS) {
+        cachedResults.push(cached.result);
+      } else {
+        nodesToFetch.push(node);
+      }
+    }
+
+    setRoomBrowseLoading(true);
+    setBrowseStatus();
+
+    try {
+      let fetchedResults = [];
+      if (nodesToFetch.length) {
+        const response = await window.aresNet.queryRoomDirectory(nodesToFetch, forceRefresh);
+        fetchedResults = (response && response.results) || [];
+      }
+
+      normalizeResults([...cachedResults, ...fetchedResults]);
+    } catch (err) {
+      nodeErrors = [{ node: 'query', error: err.message || 'query failed' }];
+      discoveredRooms = [];
+    } finally {
+      setRoomBrowseLoading(false);
+      setBrowseStatus();
+      renderRoomCards();
+    }
+  }
+
+  browseRoomsTab.addEventListener('click', () => {
+    setView('browse');
+  });
+
+  loadNodesBtn.addEventListener('click', async () => {
+    if (!window.aresNet || typeof window.aresNet.loadSNodesFile !== 'function') return;
+    try {
+      const response = await window.aresNet.loadSNodesFile();
+      if (!response || !Array.isArray(response.nodes)) {
+        browseStatus.textContent = 'SNodes.dat load cancelled.';
+        return;
+      }
+      const lines = response.nodes.map((node) => `${node.host}:${node.port}`);
+      supernodeInput.value = lines.join('\n');
+      browseStatus.textContent = `Loaded ${lines.length} supernodes from ${response.filePath}`;
+    } catch (err) {
+      browseStatus.textContent = `Failed to load SNodes.dat: ${err.message || 'unknown error'}`;
+    }
+  });
+
+  refreshRoomsBtn.addEventListener('click', () => refreshRoomListings(true));
 
   settingsBtn.addEventListener('click', () => {
     usernameInput.value = username;
