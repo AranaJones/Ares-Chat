@@ -116,44 +116,24 @@ function querySupernodeRooms(host, port, timeoutMs = 6500) {
     const socket = new net.Socket();
     const chunks = [];
     let settled = false;
+    let responseTimer = null;
 
     const finish = (result) => {
       if (settled) return;
       settled = true;
+      if (responseTimer) {
+        clearTimeout(responseTimer);
+        responseTimer = null;
+      }
       try { socket.destroy(); } catch (e) {}
       resolve(result);
     };
-
-    socket.setTimeout(timeoutMs);
-    socket.once('connect', () => {
-      const plainRequest = Buffer.from('LIST_ROOMS\n', 'utf8');
-      socket.write(d64(Buffer.from(plainRequest), 24884));
-    });
-
-    socket.on('data', (chunk) => {
-      if (!chunk || !chunk.length) return;
-      chunks.push(chunk);
-      const total = chunks.reduce((acc, item) => acc + item.length, 0);
-      if (total >= 256 * 1024) {
-        finish({ host, port, ok: false, error: 'response_too_large' });
-      }
-    });
-
-    socket.once('timeout', () => {
-      finish({ host, port, ok: false, error: 'timeout' });
-    });
-
-    socket.once('error', (err) => {
-      finish({ host, port, ok: false, error: err.code || err.message || 'connection_error' });
-    });
-
-    socket.once('close', () => {
+    const finalizeFromChunks = () => {
       if (settled) return;
       if (!chunks.length) {
         finish({ host, port, ok: false, error: 'no_response' });
         return;
       }
-
       try {
         const payload = Buffer.concat(chunks);
         const rooms = parseRoomDirectoryPayload(payload);
@@ -172,7 +152,39 @@ function querySupernodeRooms(host, port, timeoutMs = 6500) {
           error: err.message || 'invalid_response'
         });
       }
+    };
+
+    socket.setTimeout(timeoutMs);
+    socket.once('connect', () => {
+      const plainRequest = Buffer.from('LIST_ROOMS\n', 'utf8');
+      socket.write(d64(Buffer.from(plainRequest), 24884));
     });
+
+    socket.on('data', (chunk) => {
+      if (!chunk || !chunk.length) return;
+      chunks.push(chunk);
+      const total = chunks.reduce((acc, item) => acc + item.length, 0);
+      if (total >= 256 * 1024) {
+        finish({ host, port, ok: false, error: 'response_too_large' });
+        return;
+      }
+      if (responseTimer) clearTimeout(responseTimer);
+      responseTimer = setTimeout(finalizeFromChunks, 400);
+    });
+
+    socket.once('timeout', () => {
+      if (chunks.length) {
+        finalizeFromChunks();
+        return;
+      }
+      finish({ host, port, ok: false, error: 'timeout' });
+    });
+
+    socket.once('error', (err) => {
+      finish({ host, port, ok: false, error: err.code || err.message || 'connection_error' });
+    });
+
+    socket.once('end', finalizeFromChunks);
 
     try {
       socket.connect(port, host);

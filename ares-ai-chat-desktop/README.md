@@ -43,6 +43,10 @@ The latest Windows installer is available from GitHub Releases:
 - Caching directory responses for a short window to avoid repeated requests to
   the same supernodes
 
+The **Join** button currently opens a local chat tab for the selected room ID
+inside this app UI. It does **not** yet authenticate to, or fully join, the
+remote room session on the supernode.
+
 You can:
 - Paste `host:port` pairs manually if you have any from another source
 - Load a real `SNodes.dat` file if you have an existing Ares Galaxy install

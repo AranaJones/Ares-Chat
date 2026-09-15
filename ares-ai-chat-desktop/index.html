@@ -800,8 +800,9 @@
         document.body.appendChild(helper);
         helper.focus();
         helper.select();
-        document.execCommand('copy');
+        const copied = document.execCommand('copy');
         document.body.removeChild(helper);
+        if (!copied) throw new Error('copy command rejected');
       }
       browseStatus.textContent = `Copied ${text}`;
     } catch (err) {
@@ -810,7 +811,7 @@
   }
 
   function normalizeResults(results) {
-    const roomRows = [];
+    const roomById = new Map();
     const errors = [];
     for (const result of results || []) {
       const nodeLabel = `${result.host}:${result.port}`;
@@ -820,7 +821,7 @@
         continue;
       }
       for (const room of result.rooms || []) {
-        roomRows.push({
+        const normalized = {
           host: result.host,
           port: result.port,
           latencyMs: result.latencyMs,
@@ -829,11 +830,33 @@
           description: room.description,
           category: room.category,
           fetchedAt: Date.now()
-        });
+        };
+
+        const key = String(room.roomId || '').toLowerCase();
+        const existing = roomById.get(key);
+        if (!existing) {
+          roomById.set(key, normalized);
+          continue;
+        }
+        const merged = {
+          ...existing,
+          host: existing.host || normalized.host,
+          port: existing.port || normalized.port,
+          latencyMs: Math.min(
+            Number.isFinite(existing.latencyMs) ? existing.latencyMs : Number.POSITIVE_INFINITY,
+            Number.isFinite(normalized.latencyMs) ? normalized.latencyMs : Number.POSITIVE_INFINITY
+          ),
+          userCount: normalized.userCount != null ? normalized.userCount : existing.userCount,
+          description: existing.description || normalized.description,
+          category: existing.category || normalized.category,
+          fetchedAt: Math.max(existing.fetchedAt || 0, normalized.fetchedAt || 0)
+        };
+        if (!Number.isFinite(merged.latencyMs)) merged.latencyMs = null;
+        roomById.set(key, merged);
       }
     }
 
-    discoveredRooms = roomRows;
+    discoveredRooms = Array.from(roomById.values());
     nodeErrors = errors;
   }
 
