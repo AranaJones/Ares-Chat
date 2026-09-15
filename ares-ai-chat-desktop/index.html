@@ -969,32 +969,43 @@
 
   function appendHighlightedText(container, text, highlightedText) {
     const safeText = String(text || '');
-    const highlight = String(highlightedText || '');
-    if (!highlight) {
+    const highlights = Array.isArray(highlightedText)
+      ? [...new Set(highlightedText.map((value) => String(value || '')).filter(Boolean))]
+      : [String(highlightedText || '')].filter(Boolean);
+
+    if (!highlights.length) {
       container.textContent = safeText;
       return;
     }
 
-    if (!safeText.includes(highlight)) {
+    if (!highlights.some((highlight) => safeText.includes(highlight))) {
       container.textContent = safeText;
       return;
     }
 
     let cursor = 0;
     while (cursor < safeText.length) {
-      const start = safeText.indexOf(highlight, cursor);
-      if (start < 0) {
+      let nextMatch = null;
+      for (const highlight of highlights) {
+        const start = safeText.indexOf(highlight, cursor);
+        if (start < 0) continue;
+        if (!nextMatch || start < nextMatch.start || (start === nextMatch.start && highlight.length > nextMatch.text.length)) {
+          nextMatch = { start, text: highlight };
+        }
+      }
+
+      if (!nextMatch) {
         container.appendChild(document.createTextNode(safeText.slice(cursor)));
         break;
       }
-      if (start > cursor) {
-        container.appendChild(document.createTextNode(safeText.slice(cursor, start)));
+      if (nextMatch.start > cursor) {
+        container.appendChild(document.createTextNode(safeText.slice(cursor, nextMatch.start)));
       }
       const ref = document.createElement('span');
       ref.className = 'system-user-ref';
-      ref.textContent = highlight;
+      ref.textContent = nextMatch.text;
       container.appendChild(ref);
-      cursor = start + highlight.length;
+      cursor = nextMatch.start + nextMatch.text.length;
     }
   }
 
@@ -1233,7 +1244,9 @@
       username = newUsername;
       localStorage.setItem('ares_username', username);
       usernameDisplay.textContent = username;
-      addSystemMessage(`${previousUsername} changed their username`, previousUsername);
+      if (newUsername !== previousUsername) {
+        addSystemMessage(`${previousUsername} changed their username to ${username}`, [previousUsername, username]);
+      }
     }
     settingsModal.classList.remove('show');
   });
@@ -1279,6 +1292,7 @@
     chatlog.innerHTML = chatHistory[currentChannel];
   } else {
     addSystemMessage(`Welcome to #${currentChannel}, ${username}!`, username);
+    chatHistory[currentChannel] = chatlog.innerHTML;
   }
   input.focus();
 </script>
