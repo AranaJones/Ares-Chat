@@ -35,11 +35,13 @@ The latest Windows installer is available from GitHub Releases:
 
 **AI_Helper chat**: fully real - talks to the actual Anthropic API.
 
-**"Network (supernodes)" panel**: this is a genuine, working implementation
-of the *first* step the real Ares Galaxy client does - a plain TCP connect
-check against a list of supernode IP:port pairs, to see which ones still
-answer. This part needed no unverified crypto and matches
-`tthread_check_supernode.connect()` in the real (GPL) Ares Galaxy source.
+**"Browse Rooms" supernode flow**: this now includes:
+- Loading supernode candidates from `SNodes.dat`
+- Querying supernodes for room directory data
+- Showing room IDs, optional user counts/categories, supernode latency, and
+  join/copy actions
+- Caching directory responses for a short window to avoid repeated requests to
+  the same supernodes
 
 You can:
 - Paste `host:port` pairs manually if you have any from another source
@@ -47,17 +49,13 @@ You can:
   (Windows only, `%localappdata%\ares\Data\SNodes.dat` typically)
 - Click "Probe all" to see which ones respond
 
-**What's NOT implemented (and why)**: actually logging into a supernode and
-joining/reading a chat room. That requires the full client<->supernode
-handshake, which is encrypted with a keyed XOR stream cipher family
-(`d64`/`d67` in the original source). `ares-crypto.js` implements the `d64`
-variant as documented in a 2016 academic forensic paper on this exact
-network - but that paper itself never fully solved the live network
-handshake (only local file/registry encryption), and I could not locate the
-specific source file (`thread_client.pas`) that shows the exact handshake
-sequence and which key negotiates it. Building that blind would produce
-code that looks complete but silently fails - so it's left undone rather
-than faked.
+**What's still NOT implemented (and why)**: full authenticated supernode
+session/login and protocol-complete room participation. That requires the full
+client<->supernode handshake, which is encrypted with a keyed XOR stream
+cipher family (`d64`/`d67` in the original source). `ares-crypto.js` implements
+the `d64` variant as documented in a 2016 academic forensic paper on this exact
+network, but the paper itself does not fully resolve the full live network
+handshake.
 
 If you want to push this further: capturing a real login handshake with
 Wireshark against a live supernode (if any still exist) and comparing it
@@ -72,12 +70,12 @@ against `MSG_CLIENT_LOGIN_REQ` / `MSG_SUPERNODE_FIRST_LOG` in
 
 ## Project structure
 
-- `main.js` - Electron main process (window, IPC handlers for TCP probing
-  and loading SNodes.dat)
-- `preload.js` - exposes `window.aresNet` (probe/load) to the renderer
+- `main.js` - Electron main process (window, IPC handlers for probing,
+  loading SNodes.dat, and room-directory queries with caching)
+- `preload.js` - exposes `window.aresNet` (probe/load/query) to the renderer
 - `ares-crypto.js` - the d64 XOR stream cipher, with the discrepancy in the
   paper's worked example surfaced via `verifyD64()` rather than hidden
 - `ares-nodes.js` - parses SNodes.dat text format and the binary node
   candidate wire format
-- `index.html` - the UI and chat/network logic
+- `index.html` - the UI and chat/network/browse-rooms logic
 - `package.json` - dependencies and build config
