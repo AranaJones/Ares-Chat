@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <title>Ares Chat</title>
 <style>
+  :root {
+    --ares-username-color: #3498db;
+  }
+
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -150,9 +154,10 @@
 
   .header .username {
     font-size: 12px;
-    color: #bdc3c7;
+    color: var(--ares-username-color);
     white-space: nowrap;
     flex: 0 0 auto;
+    text-shadow: 0 0 1px rgba(255,255,255,0.45), 0 0 1px rgba(0,0,0,0.45);
   }
 
   .chat-panel {
@@ -193,7 +198,14 @@
 
   .message-user {
     font-weight: bold;
-    color: #2c3e50;
+    color: var(--ares-username-color);
+    text-shadow: 0 0 1px rgba(255,255,255,0.45), 0 0 1px rgba(0,0,0,0.35);
+  }
+
+  .system-user-ref {
+    color: var(--ares-username-color);
+    font-weight: bold;
+    text-shadow: 0 0 1px rgba(255,255,255,0.45), 0 0 1px rgba(0,0,0,0.35);
   }
 
   .message-time {
@@ -412,7 +424,7 @@
     border-radius: 5px;
     padding: 20px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    max-width: 400px;
+    max-width: 440px;
     width: 90%;
   }
 
@@ -441,6 +453,98 @@
     font-size: 14px;
     font-family: Arial, sans-serif;
     margin-bottom: 5px;
+  }
+
+  .color-palette {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .color-swatch {
+    width: 100%;
+    aspect-ratio: 1;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .color-swatch:hover {
+    transform: translateY(-1px);
+  }
+
+  .color-swatch.selected {
+    border-color: #2c3e50;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
+  }
+
+  .modal-field input.invalid {
+    border-color: #e74c3c;
+    box-shadow: 0 0 3px rgba(231, 76, 60, 0.3);
+  }
+
+  .color-preview-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 10px 0 8px;
+  }
+
+  .color-preview {
+    border: 1px solid #d6dce5;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 12px;
+    display: grid;
+    gap: 6px;
+  }
+
+  .color-preview.dark {
+    background: #223040;
+    border-color: #223040;
+    color: #d9ecff;
+  }
+
+  .color-preview.light {
+    background: #f8fafc;
+    color: #2c3e50;
+  }
+
+  .color-preview-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--ares-username-color);
+    text-shadow: 0 0 1px rgba(255,255,255,0.45), 0 0 1px rgba(0,0,0,0.35);
+  }
+
+  .modal-inline-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .modal-inline-actions small {
+    color: #637289;
+  }
+
+  .modal-secondary {
+    padding: 6px 10px;
+    border: 1px solid #9fb4cb;
+    border-radius: 3px;
+    background: #f4f7fb;
+    color: #2c3e50;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .modal-secondary:hover {
+    background: #e7eef7;
   }
 
   .modal-field input:focus {
@@ -535,6 +639,25 @@
       <label for="usernameInput">Username:</label>
       <input type="text" id="usernameInput" placeholder="Enter your username" maxlength="20" />
     </div>
+    <div class="modal-field">
+      <label for="usernameColorInput">Username Color:</label>
+      <div class="color-palette" id="usernameColorPalette"></div>
+      <input type="text" id="usernameColorInput" placeholder="#3498db" maxlength="7" spellcheck="false" />
+      <div class="color-preview-row">
+        <div class="color-preview light">
+          <span>Light preview</span>
+          <span class="color-preview-name" id="colorPreviewLight">Guest</span>
+        </div>
+        <div class="color-preview dark">
+          <span>Dark preview</span>
+          <span class="color-preview-name" id="colorPreviewDark">Guest</span>
+        </div>
+      </div>
+      <div class="modal-inline-actions">
+        <small>Enter a 3 or 6 digit hex code.</small>
+        <button type="button" class="modal-secondary" id="resetColorBtn">Reset to Default</button>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="save" id="saveBtn">Save</button>
       <button class="cancel" id="cancelBtn">Cancel</button>
@@ -553,6 +676,11 @@
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsModal = document.getElementById('settingsModal');
   const usernameInput = document.getElementById('usernameInput');
+  const usernameColorPalette = document.getElementById('usernameColorPalette');
+  const usernameColorInput = document.getElementById('usernameColorInput');
+  const colorPreviewLight = document.getElementById('colorPreviewLight');
+  const colorPreviewDark = document.getElementById('colorPreviewDark');
+  const resetColorBtn = document.getElementById('resetColorBtn');
   const saveBtn = document.getElementById('saveBtn');
   const cancelBtn = document.getElementById('cancelBtn');
   const browseRoomsTab = document.getElementById('browseRoomsTab');
@@ -565,9 +693,26 @@
   const refreshRoomsBtn = document.getElementById('refreshRoomsBtn');
 
   const ROOM_CACHE_TTL_MS = 30 * 1000;
+  const DEFAULT_USERNAME_COLOR = '#3498db';
+  const USERNAME_COLOR_PALETTE = [
+    '#3498db',
+    '#5dade2',
+    '#2ecc71',
+    '#58d68d',
+    '#f39c12',
+    '#e67e22',
+    '#9b59b6',
+    '#8e44ad',
+    '#16a085',
+    '#1abc9c',
+    '#7f8cfd',
+    '#f5b041'
+  ];
 
   let currentChannel = localStorage.getItem('ares_channel') || 'general';
   let username = localStorage.getItem('ares_username') || 'Guest';
+  let usernameColor = normalizeHexColor(localStorage.getItem('ares_username_color')) || DEFAULT_USERNAME_COLOR;
+  let pendingUsernameColor = usernameColor;
   let chatHistory = {};
   let currentView = 'channel';
   let isLoadingRooms = false;
@@ -583,12 +728,11 @@
     item.onclick = (e) => switchChannel(ch, e);
     channelList.appendChild(item);
 
-    if (!chatHistory[ch]) {
-      chatHistory[ch] = [];
-    }
   });
 
   usernameDisplay.textContent = username;
+  applyUsernameColor(usernameColor);
+  renderUsernameColorPalette();
 
   function parseNodeLine(rawLine) {
     const line = String(rawLine || '').trim();
@@ -752,7 +896,13 @@
     document.querySelectorAll('.channel-item[data-channel]').forEach(item => item.classList.remove('active'));
     if (e && e.currentTarget) e.currentTarget.classList.add('active');
     channelTitle.textContent = '#' + ch;
-    chatlog.innerHTML = chatHistory[ch] || `<div class="message system"><span class="message-text">Joined #${ch}</span></div>`;
+    if (typeof chatHistory[ch] === 'string') {
+      chatlog.innerHTML = chatHistory[ch];
+    } else {
+      chatlog.innerHTML = '';
+      addSystemMessage(`Joined #${ch}`);
+      chatHistory[ch] = chatlog.innerHTML;
+    }
     setView('channel');
     input.focus();
   }
@@ -762,10 +912,139 @@
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
+  function normalizeHexColor(value) {
+    const raw = String(value || '').trim().replace(/^#/, '');
+    if (/^[0-9a-f]{3}$/i.test(raw)) {
+      return '#' + raw.split('').map((char) => char + char).join('').toLowerCase();
+    }
+    if (/^[0-9a-f]{6}$/i.test(raw)) {
+      return '#' + raw.toLowerCase();
+    }
+    return '';
+  }
+
+  function applyUsernameColor(color) {
+    document.documentElement.style.setProperty('--ares-username-color', color || DEFAULT_USERNAME_COLOR);
+  }
+
+  function escapeHtml(value) {
+    const safeValue = document.createElement('span');
+    safeValue.textContent = String(value || '');
+    return safeValue.innerHTML;
+  }
+
+  function renderUsernameColorPalette() {
+    usernameColorPalette.innerHTML = '';
+    for (const color of USERNAME_COLOR_PALETTE) {
+      const swatch = document.createElement('button');
+      swatch.type = 'button';
+      swatch.className = 'color-swatch';
+      swatch.style.background = color;
+      swatch.title = color;
+      swatch.setAttribute('aria-label', `Select username color ${color}`);
+      swatch.dataset.color = color;
+      swatch.addEventListener('click', () => {
+        pendingUsernameColor = color;
+        usernameColorInput.value = color;
+        usernameColorInput.classList.remove('invalid');
+        syncUsernameColorPreview();
+      });
+      usernameColorPalette.appendChild(swatch);
+    }
+    syncUsernameColorPreview();
+  }
+
+  function syncUsernameColorPreview() {
+    const previewName = usernameInput.value.trim() || username || 'Guest';
+    const previewColor = pendingUsernameColor || DEFAULT_USERNAME_COLOR;
+    colorPreviewLight.textContent = previewName;
+    colorPreviewDark.textContent = previewName;
+    colorPreviewLight.style.color = previewColor;
+    colorPreviewDark.style.color = previewColor;
+    usernameColorInput.classList.toggle('invalid', Boolean(usernameColorInput.value.trim()) && !normalizeHexColor(usernameColorInput.value));
+    usernameColorPalette.querySelectorAll('.color-swatch').forEach((swatch) => {
+      swatch.classList.toggle('selected', swatch.dataset.color === previewColor);
+    });
+  }
+
+  function appendHighlightedText(container, text, highlightedText) {
+    const safeText = String(text || '');
+    const highlights = Array.isArray(highlightedText)
+      ? [...new Set(highlightedText.map((value) => String(value || '')).filter(Boolean))]
+      : [String(highlightedText || '')].filter(Boolean);
+
+    if (!highlights.length) {
+      container.textContent = safeText;
+      return;
+    }
+
+    if (!highlights.some((highlight) => safeText.includes(highlight))) {
+      container.textContent = safeText;
+      return;
+    }
+
+    let cursor = 0;
+    while (cursor < safeText.length) {
+      let nextMatch = null;
+      for (const highlight of highlights) {
+        const start = safeText.indexOf(highlight, cursor);
+        if (start < 0) continue;
+        if (!nextMatch || start < nextMatch.start || (start === nextMatch.start && highlight.length > nextMatch.text.length)) {
+          nextMatch = { start, text: highlight };
+        }
+      }
+
+      if (!nextMatch) {
+        container.appendChild(document.createTextNode(safeText.slice(cursor)));
+        break;
+      }
+      if (nextMatch.start > cursor) {
+        container.appendChild(document.createTextNode(safeText.slice(cursor, nextMatch.start)));
+      }
+      const ref = document.createElement('span');
+      ref.className = 'system-user-ref';
+      ref.textContent = nextMatch.text;
+      container.appendChild(ref);
+      cursor = nextMatch.start + nextMatch.text.length;
+    }
+  }
+
+  function addSystemMessage(text, highlightedText = '') {
+    const msg = document.createElement('div');
+    msg.className = 'message system';
+
+    const timeEl = document.createElement('span');
+    timeEl.className = 'message-time';
+    timeEl.textContent = timestamp();
+    msg.appendChild(timeEl);
+
+    const textEl = document.createElement('div');
+    textEl.className = 'message-text';
+    appendHighlightedText(textEl, text, highlightedText);
+    msg.appendChild(textEl);
+    chatlog.appendChild(msg);
+    chatlog.scrollTop = chatlog.scrollHeight;
+  }
+
   function addMessage(user, text, isUpdate = false) {
     const msg = document.createElement('div');
     msg.className = isUpdate ? 'message update' : 'message';
-    msg.innerHTML = `<span class="message-time">${timestamp()}</span><span class="message-user">${user}</span><div class="message-text">${text}</div>`;
+
+    const timeEl = document.createElement('span');
+    timeEl.className = 'message-time';
+    timeEl.textContent = timestamp();
+    msg.appendChild(timeEl);
+
+    const userEl = document.createElement('span');
+    userEl.className = 'message-user';
+    userEl.textContent = user;
+    msg.appendChild(userEl);
+
+    const textEl = document.createElement('div');
+    textEl.className = 'message-text';
+    textEl.innerHTML = text;
+    msg.appendChild(textEl);
+
     chatlog.appendChild(msg);
     chatlog.scrollTop = chatlog.scrollHeight;
   }
@@ -773,7 +1052,7 @@
   function handleSend() {
     const text = input.value.trim();
     if (!text) return;
-    addMessage(username, text);
+    addMessage(username, escapeHtml(text));
     input.value = '';
     input.focus();
   }
@@ -937,17 +1216,37 @@
 
   settingsBtn.addEventListener('click', () => {
     usernameInput.value = username;
+    usernameColorInput.value = usernameColor;
+    pendingUsernameColor = usernameColor;
+    syncUsernameColorPreview();
     settingsModal.classList.add('show');
     usernameInput.focus();
   });
 
   saveBtn.addEventListener('click', () => {
+    const previousUsername = username;
     const newUsername = usernameInput.value.trim();
+    const typedUsernameColor = usernameColorInput.value.trim();
+    const normalizedTypedColor = normalizeHexColor(typedUsernameColor);
+    if (typedUsernameColor && !normalizedTypedColor) {
+      usernameColorInput.classList.add('invalid');
+      usernameColorInput.focus();
+      return;
+    }
+    const nextUsernameColor = normalizedTypedColor || pendingUsernameColor || DEFAULT_USERNAME_COLOR;
+
+    usernameColor = nextUsernameColor;
+    pendingUsernameColor = nextUsernameColor;
+    localStorage.setItem('ares_username_color', usernameColor);
+    applyUsernameColor(usernameColor);
+
     if (newUsername) {
       username = newUsername;
       localStorage.setItem('ares_username', username);
       usernameDisplay.textContent = username;
-      addMessage('System', `${username} changed their username`);
+      if (newUsername !== previousUsername) {
+        addSystemMessage(`${previousUsername} changed their username to ${username}`, [previousUsername, username]);
+      }
     }
     settingsModal.classList.remove('show');
   });
@@ -960,16 +1259,40 @@
     if (e.key === 'Enter') saveBtn.click();
   });
 
+  usernameInput.addEventListener('input', syncUsernameColorPreview);
+  usernameColorInput.addEventListener('input', () => {
+    const normalizedColor = normalizeHexColor(usernameColorInput.value);
+    if (normalizedColor) {
+      pendingUsernameColor = normalizedColor;
+    }
+    syncUsernameColorPreview();
+  });
+  usernameColorInput.addEventListener('blur', () => {
+    const normalizedColor = normalizeHexColor(usernameColorInput.value);
+    if (normalizedColor) {
+      usernameColorInput.value = normalizedColor;
+      pendingUsernameColor = normalizedColor;
+    }
+    syncUsernameColorPreview();
+  });
+  resetColorBtn.addEventListener('click', () => {
+    pendingUsernameColor = DEFAULT_USERNAME_COLOR;
+    usernameColorInput.value = DEFAULT_USERNAME_COLOR;
+    usernameColorInput.classList.remove('invalid');
+    syncUsernameColorPreview();
+  });
+
   sendBtn.addEventListener('click', handleSend);
   input.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleSend();
   });
 
   channelTitle.textContent = '#' + currentChannel;
-  if (chatHistory[currentChannel]) {
+  if (typeof chatHistory[currentChannel] === 'string') {
     chatlog.innerHTML = chatHistory[currentChannel];
   } else {
-    addMessage('System', `Welcome to #${currentChannel}, ${username}!`);
+    addSystemMessage(`Welcome to #${currentChannel}, ${username}!`, username);
+    chatHistory[currentChannel] = chatlog.innerHTML;
   }
   input.focus();
 </script>
